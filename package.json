@@ -1,44 +1,37 @@
 {
   "name": "intass",
-  "version": "6.0.0",
+  "version": "3.0.0",
   "main": "src/main.js",
   "description": "IntAss AI Intelligent Assistant",
   "author": "pongapps",
-  "scripts": {
-    "start": "electron .",
-    "dist": "electron-builder"
-  },
-  "build": {
-    "appId": "com.intass.app",
-    "productName": "IntAss",
-    "directories": {
-      "output": "dist"
+    "scripts": {
+      "start": "electron .",
+      "build_engine": "powershell -ExecutionPolicy Bypass -File build_engine\\build_engine.ps1",
+      "dist": "electron-builder"
+    },
+
+    "build": {
+      "appId": "com.intass.app",
+      "productName": "IntAss",
+      "directories": {
+        "output": "dist"
+      },
+      "publish": [
+        {
+          "provider": "github"
+        }
+      ]
     },
     "files": [
       "src/**/*",
       "package.json"
     ],
     "extraResources": [
-      {
-        "from": "assets",
-        "to": "assets"
-      },
-      {
-        "from": "build_engine/dist/intass_engine",
-        "to": "engine/intass_engine"
-      },
-      {
-        "from": "models",
-        "to": "models"
-      },
-      {
-        "from": "resources",
-        "to": "resources"
-      },
-      {
-        "from": ".env.example",
-        "to": ".env"
-      }
+      { "from": "assets", "to": "assets" },
+      { "from": "build_engine/dist/intass_engine", "to": "engine/intass_engine" },
+      { "from": "models/model-en-us", "to": "engine/models/model-en-us" },
+      { "from": "resources", "to": "engine/resources" },
+      { "from": ".env.example", "to": "engine/intass_engine/.env" }
     ],
     "win": {
       "icon": "assets/intass.ico",
@@ -52,6 +45,7 @@
     "ws": "^8.19.0"
   },
   "devDependencies": {
-    "electron": "^40.2.1"
+    "electron": "^40.2.1",
+    "electron-builder": "^26.7.0"
   }
 }
