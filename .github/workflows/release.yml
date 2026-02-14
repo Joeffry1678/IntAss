@@ -1,0 +1,54 @@
+name: Build & Release (Windows)
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Install Python dependencies (engine)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r build_engine/requirements.txt
+
+      - name: Build Python engine (PyInstaller)
+        run: npm run build_engine
+
+      - name: Build Electron installer
+        run: npm run dist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload files to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.exe
+            dist/*.msi
+            dist/*.zip
