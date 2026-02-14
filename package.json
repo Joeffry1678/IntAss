@@ -1,0 +1,57 @@
+{
+  "name": "intass",
+  "version": "6.0.0",
+  "main": "src/main.js",
+  "description": "IntAss AI Intelligent Assistant",
+  "author": "pongapps",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.intass.app",
+    "productName": "IntAss",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "assets",
+        "to": "assets"
+      },
+      {
+        "from": "build_engine/dist/intass_engine",
+        "to": "engine/intass_engine"
+      },
+      {
+        "from": "models",
+        "to": "models"
+      },
+      {
+        "from": "resources",
+        "to": "resources"
+      },
+      {
+        "from": ".env.example",
+        "to": ".env"
+      }
+    ],
+    "win": {
+      "icon": "assets/intass.ico",
+      "target": [
+        "zip"
+      ]
+    }
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.95.3",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "electron": "^40.2.1"
+  }
+}

@@ -1,0 +1,1611 @@
+:root{
+  --glass-opacity: 1.0;  /* slider controls this */
+  --tint-alpha: 0.20;     /* base corner paint (also controlled) */
+  --radius: 22px;
+}
+
+
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: transparent !important;
+  overflow: hidden;
+}
+
+body{
+  font-family: "Segoe UI", sans-serif;
+}
+
+
+#app-shell > *:not(.resize-handle){
+  position: relative;
+  z-index: 1;
+}
+
+
+
+/* App shell becomes layout-only (no background now) */
+#app-shell{
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display:flex;
+  flex-direction: column;
+  box-sizing: border-box;
+
+  /* ❌ remove clipping from the main container */
+  border-radius: 0;
+  overflow: visible;
+
+  background: transparent;
+}
+
+
+
+
+#app-shell::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+
+  border-radius: var(--radius);
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255, 0.10),
+      rgba(255,255,255, 0.03)
+    ),
+    rgba(18,18,18, 0.55);
+
+  backdrop-filter: blur(28px) saturate(160%) contrast(105%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%) contrast(105%);
+
+  opacity: var(--glass-opacity);
+  z-index: 0;
+}
+
+
+
+/* ---------- Custom Titlebar ---------- */
+.titlebar {
+  position: relative;
+  -webkit-app-region: drag;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 10px 0 12px;
+  border-radius: 16px;
+  background: rgba(20, 20, 20, 0.55);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  margin-bottom: 10px;
+}
+
+.titlebar-drag{
+  -webkit-app-region: drag;
+}
+
+.titlebar-left {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  -webkit-app-region: drag;
+}
+
+.app-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  -webkit-app-region: no-drag;
+  user-select: none;
+  pointer-events: auto;
+  cursor: pointer;
+  opacity: 0.9;
+}
+
+.titlebar-title{
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: rgba(255,255,255,0.92);
+  text-shadow: 0 1px 0 rgba(0,0,0,0.35);
+  user-select: none;
+  -webkit-app-region: drag; /* ✅ allow dragging on the title text */
+}
+
+.titlebar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+  -webkit-app-region: no-drag;
+}
+
+.winbtn {
+  -webkit-app-region: no-drag;
+  width: 34px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.85);
+  font-size: 14px;
+  line-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease, box-shadow 120ms ease;
+}
+.winbtn:active { transform: scale(0.96); }
+
+.winbtn-min {
+  background: rgba(0, 255, 200, 0.12);
+  border-color: rgba(0, 255, 200, 0.35);
+  color: rgba(180, 255, 240, 0.95);
+}
+.winbtn-min:hover {
+  background: rgba(0, 255, 200, 0.18);
+  box-shadow: 0 0 0 3px rgba(0, 255, 200, 0.12);
+}
+
+.winbtn-close {
+  background: rgba(255, 0, 180, 0.12);
+  border-color: rgba(255, 0, 180, 0.35);
+  color: rgba(255, 200, 240, 0.98);
+}
+.winbtn-close:hover {
+  background: rgba(255, 0, 180, 0.18);
+  box-shadow: 0 0 0 3px rgba(255, 0, 180, 0.12);
+}
+
+/* ---------- Layout ---------- */
+.container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+  min-height: 0;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+.card {
+  background:
+    linear-gradient(180deg,
+      rgba(255,255,255,0.10),
+      rgba(255,255,255,0.04)
+    ),
+    rgba(20,20,20,0.35);
+
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.06),
+    0 10px 30px rgba(0,0,0,0.25);
+  padding: 14px;
+  border-radius: 16px;
+  margin: 0;
+}
+
+/* TOP PANEL */
+.top-panel{
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;        /* ✅ IMPORTANT: allow shrink */
+  overflow: hidden;
+}
+
+
+.context-block.is-off{
+  display:none !important;
+}
+
+
+
+
+/* =========================
+   PRIMARY CONTEXT = AI ANSWER
+   ========================= */
+
+#ai-answer,
+#ai-brain {
+
+
+  background: linear-gradient(
+    180deg,
+    rgba(30, 40, 55, 0.95),
+    rgba(20, 25, 35, 0.95)
+  );
+
+  border-radius: 10px;
+  padding: 16px;
+
+  overflow-y: auto;
+
+  font-size: 16px;      /* slightly larger */
+  line-height: 1.75;    /* more breathing room */
+  letter-spacing: 0.2px;
+
+  color: #e9f1ff;
+  white-space: pre-wrap;
+
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+
+/* Same chunk box styling inside both panes */
+#ai-answer .match-box,
+#ai-brain  .match-box {
+  background: rgba(15, 25, 40, 0.85);
+  border: 1px solid rgba(90, 160, 255, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+  margin-bottom: 10px;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+/* Same paragraph styling inside both panes */
+#ai-answer .match-par,
+#ai-brain  .match-par {
+  margin: 0 0 14px 0;
+  white-space: pre-wrap;
+
+  font-size: 16px;
+  line-height: 1.75;
+  letter-spacing: 0.2px;
+
+  color: #e9f1ff;
+}
+
+
+/* Same pre/code styling inside both panes */
+#ai-answer .match-pre,
+#ai-brain  .match-pre,
+#ai-brain  .ctx-pre { /* ctx-pre should match too */
+  margin: 0 0 10px 0;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(31, 58, 85, 0.55);
+  border-radius: 12px;
+  white-space: pre-wrap;
+  font-family: Consolas, monospace;
+  color: #cce7ff;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* Scrollbars identical */
+#ai-answer::-webkit-scrollbar,
+#ai-brain::-webkit-scrollbar {
+  width: 10px;
+}
+
+#ai-answer::-webkit-scrollbar-track,
+#ai-brain::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.25);
+  border-radius: 10px;
+}
+
+#ai-answer::-webkit-scrollbar-thumb,
+#ai-brain::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.16);
+  border-radius: 10px;
+}
+
+#ai-answer::-webkit-scrollbar-thumb:hover,
+#ai-brain::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.22);
+}
+
+
+
+/* =========================
+   AI ANSWER SCROLLBAR
+   (match Primary Context)
+   ========================= */
+
+/* BOTTOM PANEL */
+.bottom-panel{
+  flex: 0 0 250px;      /* ✅ smaller transcript area */
+  height: 250px;        /* ✅ enforce */
+  max-height: 250px;
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+
+
+.bottom-panel .panel-card{
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+
+
+
+#output {
+  background: rgba(0,0,0,0.55);
+  flex: 1;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 14px;
+  border-radius: 14px;
+  font-family: 'Consolas', monospace;
+  color: #00ff00;
+  border: 1px solid rgba(255,255,255,0.10);
+  font-size: 13px;
+}
+
+/* Header row + tools */
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.trx-tools {
+  display: flex;
+  gap: 8px;
+}
+
+.toolbtn {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.88);
+  font-size: 11px;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.toolbtn:hover { background: rgba(255,255,255,0.12); }
+
+/* Context sections */
+.match-list { margin: 0 0 10px 20px; padding: 0; }
+.match-list li { margin: 6px 0; }
+
+/* AI Answer box: normal vs compact when OFF */
+#ai-answer,
+#ai-brain {
+  transition:
+    height 160ms ease,
+    max-height 160ms ease,
+    min-height 160ms ease,
+    padding 160ms ease,
+    opacity 160ms ease;
+}
+
+
+/* Transcript items */
+.history-item {
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  transition: 0.2s;
+  cursor: pointer;
+  border-radius: 10px;
+  font-size: 12px;
+  user-select: text;
+  cursor: text;
+  white-space: pre-wrap;
+}
+
+.history-item[contenteditable="true"]{
+  cursor: text !important;
+  user-select: text !important;
+}
+
+
+.history-item:hover {
+  background: rgba(255,255,255,0.08);
+  border-left: 3px solid rgba(0,120,212,0.9);
+}
+.history-item.selected {
+  background: rgba(0,120,212,0.55);
+  border: 1px solid rgba(0,120,212,0.45);
+}
+
+/* Status bar */
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 10px 10px 10px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.65);
+}
+
+.status-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#status-light {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ff4444;
+}
+
+/* Buttons */
+button {
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.9);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.rescan-btn{
+  height: 26px;
+  padding: 0 12px;
+  font-size: 13px;
+  border-radius: 999px;   /* pill */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+
+button:hover { background: rgba(255,255,255,0.10); }
+
+.btn-start { background: rgba(0,120,212,0.55); border-color: rgba(0,120,212,0.35); }
+.btn-stop { background: rgba(212, 0, 0, 0.55); border-color: rgba(212, 0, 0, 0.35); }
+.secondary { background: rgba(255,255,255,0.06); }
+
+
+
+.mini-label{
+  font-size: 10px;
+  letter-spacing: 0.3px;
+  color: rgba(255,255,255,0.80);
+}
+
+.divider{
+  width: 1px;
+  height: 18px;
+  background: rgba(255,255,255,0.14);
+  margin: 0 4px;
+}
+
+h4{
+  margin: 0;                    /* ✅ no vertical offset */
+  line-height: 1;               /* ✅ same baseline */
+  display:flex;
+  align-items:center;
+  color: rgba(0,120,212,0.95);
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+
+
+.panel-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.context-split{
+  display: flex;
+  flex-direction: row;        /* ✅ side-by-side */
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+
+
+.context-block{
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.context-body{
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;      /* ✅ no scroll here */
+  padding: 0;            /* ✅ prevents tiny overflow */
+}
+
+
+
+
+.app-icon {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.winbtn {
+  width: 28px !important;
+  height: 20px !important;
+  font-size: 10px !important;
+  line-height: 20px !important;
+  padding: 0 !important;
+  border-radius: 999px !important; /* ✅ fully pill */
+}
+
+/* Never drag on interactive controls */
+button, input, select, textarea, label,
+.slider-container, #opacity-slider,
+.toolbtn, .winbtn {
+  -webkit-app-region: no-drag !important;
+}
+
+
+
+/* ---------- STATUS BAR ---------- */
+.status-bar {
+  min-height: 22px !important;
+  padding: 2px 6px !important;
+}
+
+#status-light {
+  width: 6px !important;
+  height: 6px !important;
+}
+
+#status-text {
+  font-size: 10px !important;
+}
+
+/* ---------- DEVICE / CONTROL BAR ---------- */
+.card:has(#device-select) {
+  padding: 2px 6px !important;
+  margin-bottom: 2px !important;
+  border-radius: 5px !important;
+}
+
+#device-select {
+  height: 20px !important;
+  padding: 2px 6px !important;
+  font-size: 9.5px !important;
+}
+
+#capture-btn,
+#reload-btn,
+#resources-btn {
+  height: 20px !important;
+  padding: 2px 8px !important;
+  font-size: 9.5px !important;
+  border-radius: 4px !important;
+}
+
+.card:has(#device-select) > div {
+  gap: 4px !important;
+}
+
+
+/* ===== Compact Window Opacity + Privacy pill ===== */
+/* ===== Compact Window Opacity + Privacy pill (SMALLER) ===== */
+.slider-container{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.05);
+}
+
+/* =========================
+   LABEL READABILITY FIX
+   ========================= */
+
+/* Main mini labels (Opacity, Privacy etc) */
+.mini-label{
+  font-size: 10.5px !important;     /* readable */
+  font-weight: 700 !important;
+  letter-spacing: 0.5px;
+  color: rgba(255,255,255,0.95) !important; /* strong contrast */
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);    /* glass contrast boost */
+}
+
+/* Toolbar labels (PRIMARY / AI / SCRIPT) */
+.ctx-label{
+  font-size: 10px !important;
+  color: rgba(255,255,255,0.92) !important;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+
+/* Script editor field labels */
+.se-field label{
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+
+
+/* slider smaller */
+#opacity-slider{
+  height: 7px;
+  min-width: 95px;
+}
+
+#opacity-slider::-webkit-slider-runnable-track{
+  height: 2px;
+  border-radius: 999px;
+}
+
+#opacity-slider::-webkit-slider-thumb{
+  width: 8px;
+  height: 8px;
+  margin-top: -3px;
+  border-radius: 50%;
+}
+
+/* privacy toggle smaller inside slider-container */
+.slider-container .ai-switch{
+  width: 26px;
+  height: 13px;
+  top: 0;
+}
+
+.slider-container .ai-switch .slider{
+  border-radius: 13px;
+}
+
+.slider-container .ai-switch .slider:before{
+  width: 9px;
+  height: 9px;
+  top: 2px;
+  left: 2px;
+}
+
+.slider-container .ai-switch input:checked + .slider:before{
+  transform: translateX(13px);
+}
+
+
+
+/* Script actions row (under audio devices) */
+.script-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap: 6px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding: 0 2px;
+  /* visually align under the device dropdown (past the 🎧 button) */
+  margin-left: 28px;
+}
+
+/* Make Mode + Script buttons match core controls */
+#capture-btn,
+#reload-btn,
+#resources-btn,
+#mode-btn,
+#script-open-btn,
+#script-new-btn,
+#script-dup-top-btn,
+#script-editor-btn,
+#script-lock-top-btn{
+  height: 20px !important;
+  padding: 2px 10px !important;
+  font-size: 9.5px !important;
+  border-radius: 4px !important;
+}
+
+/* Script mode: maximize Primary pane, hide AI pane (AI is OFF anyway) */
+.mode-script .context-split{ gap: 0; }
+.mode-script #ai-pane{ display:none !important; }
+.mode-script #ctx-pane{ flex: 1 1 auto; }
+
+/* Script mode: give Primary more vertical space */
+.mode-script .top-panel{ flex: 1.35; }
+
+.ai-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:6px;     /* was 12px */
+  margin-bottom:6px;  /* add a little breathing room */
+}
+
+
+/* Toggle switch */
+.ai-switch{
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 18px;
+  top: -3px;
+}
+
+.ai-switch input{
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.ai-switch .slider{
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #444;
+  border-radius: 18px;
+  transition: 0.2s;
+}
+
+.ai-switch .slider:before{
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  top: 2px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.2s;
+}
+
+.ai-switch input:checked + .slider{
+  background-color: #2aa8ff;
+}
+
+.ai-switch input:checked + .slider:before{
+  transform: translateX(18px);
+}
+
+/* Compact AI OFF text */
+.ai-off-text {
+  font-size: 11px;          /* 🔽 smaller text */
+  line-height: 1;
+  color: rgba(255,255,255,0.55);
+  text-align: center;
+  font-style: italic;
+  margin: 0;
+  padding: 0;
+}
+
+.ctx-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:8px;
+}
+
+/* ===== Toolbar row (Primary + AI + Script tools) ===== */
+.ctx-toolbar{
+  display: flex;
+  justify-content: flex-start;   /* ✅ LEFT side */
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+
+  flex-wrap: nowrap;             /* keep in one row */
+  overflow-x: auto;              /* if window is small, allow horizontal scroll */
+  padding-bottom: 6px;
+}
+
+
+/* Each toggle = pill button size */
+.ctx-tool{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  height: 26px;
+  padding: 0 10px;
+
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+
+  font-size: 11px;
+}
+
+/* Label like small control text */
+.ctx-label{
+  font-size: 9.5px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.75);
+  line-height: 1;
+}
+
+/* Shrink the switch itself */
+.ctx-tool .ai-switch{
+  width: 30px;
+  height: 14px;
+}
+
+.ctx-tool .ai-switch .slider{
+  border-radius: 14px;
+}
+
+.ctx-tool .ai-switch .slider:before{
+  width: 10px;
+  height: 10px;
+  top: 2px;
+  left: 2px;
+}
+
+.ctx-tool .ai-switch input:checked + .slider:before{
+  transform: translateX(14px);
+}
+
+/* =========================
+   TRANSCRIPTION SCROLLBAR
+   (match Context + AI)
+   ========================= */
+
+#output::-webkit-scrollbar{
+  width: 10px;
+}
+
+#output::-webkit-scrollbar-track{
+  background: rgba(0,0,0,0.25);
+  border-radius: 10px;
+}
+
+#output::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,0.16);
+  border-radius: 10px;
+}
+
+#output::-webkit-scrollbar-thumb:hover{
+  background: rgba(255,255,255,0.22);
+}
+
+#partial-wrap{
+  padding: 6px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: text;
+  transition: background 120ms ease, border 120ms ease;
+}
+
+#partial-wrap:hover{
+  background: rgba(255,255,255,0.06);
+}
+
+#partial-wrap.selected{
+  background: rgba(0,120,212,0.25);
+  border: 1px solid rgba(0,120,212,0.35);
+}
+
+#license-block{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 999999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  pointer-events: all; /* blocks clicks */
+}
+
+#license-block.show{
+  display: flex;
+}
+
+#license-block .license-card{
+  width: 420px;
+  border-radius: 16px;
+  background: rgba(20,20,20,0.96);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 18px 45px rgba(0,0,0,0.60);
+  padding: 16px;
+  color: #fff;
+  font-family: Segoe UI, sans-serif;
+}
+
+#license-block .license-title{
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+#license-block .license-msg{
+  font-size: 13px;
+  color: rgba(255,255,255,0.85);
+  margin-bottom: 14px;
+  line-height: 1.4;
+}
+
+#license-block .license-actions{
+  display:flex;
+  justify-content:flex-end;
+}
+
+#license-block button{
+  border: 0;
+  outline: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  color: white;
+  background: rgba(0,120,212,0.95);
+}
+#license-block.show{ display:flex; }
+
+#machine-id-pill{
+  -webkit-app-region: no-drag;
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.78);
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+
+/* keep a tiny invisible resize zone */
+html, body {
+  padding: 0;
+}
+
+
+/* ===== Frameless resize handles (no Win32 hit-test) ===== */
+.resize-handle{
+  position: fixed;
+  z-index: 2147483647;         /* max */
+  -webkit-app-region: no-drag; /* REQUIRED */
+  pointer-events: auto;        /* REQUIRED */
+  background: transparent;
+  touch-action: none;          /* REQUIRED for pointer events */
+}
+
+
+/* ===== Frameless resize handles (SAFE) ===== */
+.resize-handle{
+  position: fixed;
+  z-index: 2147483647;
+  -webkit-app-region: no-drag;
+  background: transparent;
+  touch-action: none;
+  pointer-events: auto;
+}
+
+/* ✅ ONLY 6px edges */
+.resize-handle.n, .resize-handle.s{
+  left: 0; right: 0; height: 6px;
+}
+.resize-handle.e, .resize-handle.w{
+  top: 0; bottom: 0; width: 6px;
+}
+
+/* ✅ corners small */
+.resize-handle.ne, .resize-handle.nw,
+.resize-handle.se, .resize-handle.sw{
+  width: 10px; height: 10px;
+}
+
+/* ✅ KEEP them strictly on the border */
+.resize-handle.n{ top: 0; }
+.resize-handle.s{ bottom: 0; }
+.resize-handle.e{ right: 0; }
+.resize-handle.w{ left: 0; }
+.resize-handle.ne{ top: 0; right: 0; }
+.resize-handle.nw{ top: 0; left: 0; }
+.resize-handle.se{ bottom: 0; right: 0; }
+.resize-handle.sw{ bottom: 0; left: 0; }
+
+.script-editor, .script-editor *{
+  -webkit-app-region: no-drag !important;
+}
+
+
+
+
+.ai-placeholder{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  height: 100%;          /* ✅ fill without overflow */
+  min-height: 0;         /* ✅ prevents fake scroll */
+  padding: 0;            /* ✅ no extra overflow */
+
+  font-size: 14px;
+  color: rgba(255,255,255,0.35);
+}
+
+
+#tutorial-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(8px);
+  z-index: 9999999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+#tutorial-overlay.show{
+  display:flex;
+}
+
+.tutorial-card{
+  width: 420px;
+  padding: 24px;
+  border-radius: 16px;
+  background: rgba(20,20,20,0.96);
+  border: 1px solid rgba(255,255,255,0.12);
+  text-align: center;
+  color: white;
+}
+/* Script mode */
+.pill{
+  display:inline-block;
+  padding:4px 8px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  margin-right:6px;
+  font-size:11px;
+}
+
+.pill-click{
+  cursor: pointer;
+}
+
+.pill-click:hover{
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(0,120,212,0.45);
+}
+
+.script-nav-btn[disabled]{
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+
+/* --- Script Editor (lightweight) --- */
+.script-editor{
+  display:flex;
+  gap:12px;
+  height:100%;
+}
+
+.script-editor .se-left{
+  width:220px;
+  border-right:1px solid rgba(255,255,255,0.10);
+  padding-right:10px;
+  overflow:auto;
+}
+
+.script-editor .se-right{
+  flex:1;
+  overflow:auto;
+}
+
+.se-title{
+  font-weight:800;
+  margin-bottom:10px;
+}
+
+.se-list{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.se-node{
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  cursor:pointer;
+  user-select:none;
+  font-size:12px;
+}
+
+.se-node.active{
+  border-color: rgba(0,120,212,0.65);
+  background: rgba(0,120,212,0.12);
+}
+
+.se-actions{
+  display:flex;
+  gap:8px;
+  margin:10px 0;
+  flex-wrap:wrap;
+}
+
+.se-btn{
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color:white;
+  cursor:pointer;
+  font-size:12px;
+}
+
+.se-btn.danger{
+  border-color: rgba(255,80,80,0.35);
+  background: rgba(255,80,80,0.08);
+}
+
+.se-field{
+  margin-bottom:10px;
+}
+
+.se-field label{
+  display:block;
+  font-size:12px;
+  font-weight:700;
+  color: rgba(255,255,255,0.85);
+  opacity:1;
+  margin-bottom:6px;
+}
+
+.se-field input, .se-field textarea, .se-field select{
+  width:100%;
+  box-sizing:border-box;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.12);
+  background: rgba(40,40,40,0.55);
+  color:white;
+  font-size:13px;
+}
+
+.se-field textarea{
+  min-height:88px;
+  resize:vertical;
+}
+
+.se-rows{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.se-row{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.se-row .k{
+  flex:1;
+}
+
+.se-row .n{
+  flex:1;
+}
+
+.se-msg{
+  margin-top:10px;
+  font-size:12px;
+  opacity:0.9;
+}
+
+/* Show Script tools inside the ctx-toolbar only in Script mode */
+body.mode-script #script-tools-inline{
+  display: flex !important;
+}
+
+/* Optional: tighten it so it looks like the other pills */
+body.mode-script #script-tools-inline{
+  height: 26px;
+  padding: 0 10px;
+  gap: 8px;
+}
+
+/* =========================
+   FIX: Primary/AI pane should fill space (no fake scroll when empty)
+   ========================= */
+
+#ai-brain,
+#ai-answer{
+  height: 100%;
+  margin-top: 0 !important;   /* ✅ stop overflow from margin */
+  box-sizing: border-box;
+  overflow-y: auto;            /* ✅ scroll ONLY here */
+  overflow-x: hidden;
+}
+
+/* If your Primary pane contains a header above the scroll area,
+   make sure the block is flex and can shrink properly */
+.context-block{
+  min-height: 0;
+}
+
+/* =========================
+   SCRIPT MODE: fill whole box + smaller text (CSS-only)
+   Place at VERY BOTTOM
+   ========================= */
+
+body.mode-script #ai-brain{
+  padding: 0 !important;          /* remove the 16px padding */
+  display: flex !important;       /* allow child to stretch */
+  overflow: hidden !important;    /* child will scroll */
+  font-size: 12px !important;     /* smaller base */
+  line-height: 1.25 !important;
+}
+
+/* Make the match-box become full-height layout */
+body.mode-script #ai-brain .match-box{
+  flex: 1;
+  height: 100%;
+  margin: 0 !important;           /* remove margin-bottom */
+  padding: 0 !important;          /* remove padding so it can be full-bleed */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 10px;            /* keep your style */
+}
+
+/* Script mode compact header */
+body.mode-script #ai-brain .match-box > div:first-child{
+  padding: 6px 12px 4px 12px !important;  /* tighter */
+  font-size: 10px !important;
+}
+
+/* Script mode compact say section */
+body.mode-script #ai-brain .match-box > div:nth-child(2){
+  flex: 1;
+  padding: 8px 12px !important;  /* reduced from 12px */
+  padding: 4px 12px 8px 12px !important; /* smaller top padding */
+  overflow: auto;
+  font-size: 16px !important;
+  line-height: 1.25 !important;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+
+/* Listening row (third div inside match-box) */
+body.mode-script #ai-brain .match-box > div:nth-child(3){
+  padding: 10px 12px !important;
+  font-size: 11px !important;
+  border-top: 1px solid rgba(255,255,255,0.10);
+  opacity: 0.85;
+}
+/* ✅ Script mode: ensure placeholder truly fills and centers */
+body.mode-script #ai-brain .ai-placeholder{
+  flex: 1;                 /* key: fill remaining space */
+  width: 100%;
+  height: auto;            /* don't rely on 100% */
+  min-height: 0;
+  padding: 0;
+}
+
+/* =========================
+   SCRIPT MODAL (New / Unlock)
+   Put at VERY BOTTOM of style.css
+   ========================= */
+
+#modal-backdrop.modal-backdrop{
+  color: rgba(255,255,255,0.92); /* default text color */
+}
+
+#modal-backdrop .modal{
+  color: rgba(255,255,255,0.92);       /* ✅ fix black text */
+  background: rgba(20,20,20,0.96);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 18px 45px rgba(0,0,0,0.60);
+}
+
+#modal-backdrop .modal h3{
+  color: rgba(255,255,255,0.95);
+}
+
+#modal-backdrop .modal .note,
+#modal-backdrop .modal label{
+  color: rgba(255,255,255,0.80);
+}
+
+/* Inputs/selects */
+#modal-backdrop .modal input,
+#modal-backdrop .modal select{
+  color: rgba(255,255,255,0.92);       /* ✅ typed text */
+  background: rgba(40,40,40,0.55);
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+/* Placeholders */
+#modal-backdrop .modal input::placeholder{
+  color: rgba(255,255,255,0.55);
+}
+
+/* ✅ IMPORTANT (Windows): <option> often stays black unless forced */
+#modal-backdrop .modal select option{
+  color: #fff;
+  background: rgba(20,20,20,0.98);
+}
+
+/* Buttons inside modal */
+#modal-backdrop .modal .actions .toolbtn{
+  color: rgba(255,255,255,0.90);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+#modal-backdrop .modal .actions .toolbtn:hover{
+  background: rgba(255,255,255,0.12);
+}
+
+/* =========================
+   SCRIPT EDITOR SCROLLBAR
+   Match Primary + AI
+   ========================= */
+
+.script-editor .se-left::-webkit-scrollbar,
+.script-editor .se-right::-webkit-scrollbar{
+  width: 10px;
+}
+
+.script-editor .se-left::-webkit-scrollbar-track,
+.script-editor .se-right::-webkit-scrollbar-track{
+  background: rgba(0,0,0,0.25);
+  border-radius: 10px;
+}
+
+.script-editor .se-left::-webkit-scrollbar-thumb,
+.script-editor .se-right::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,0.16);
+  border-radius: 10px;
+}
+
+.script-editor .se-left::-webkit-scrollbar-thumb:hover,
+.script-editor .se-right::-webkit-scrollbar-thumb:hover{
+  background: rgba(255,255,255,0.22);
+}
+
+/* =========================
+   CENTER INPUTS: Script Editor
+   ========================= */
+.script-editor .se-right{
+  display: flex;
+  flex-direction: column;
+  align-items: center;     /* centers the whole form column */
+}
+
+/* =========================
+   SCRIPT EDITOR — FULL WIDTH
+   ========================= */
+
+.script-editor .se-right{
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;   /* 🔥 not centered anymore */
+}
+
+.script-editor .se-right > *{
+  width: 100%;
+  max-width: 100%;        /* 🔥 allow full expansion */
+}
+
+.script-editor .se-field input,
+.script-editor .se-field textarea,
+.script-editor .se-field select{
+  width: 100%;
+  max-width: 100%;
+}
+
+
+/* The inline Add-Node row */
+.se-new-node-id{
+  flex: 1;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.12);
+  background: rgba(40,40,40,0.55);
+  color:white;
+  font-size:13px;
+}
+
+/* =========================
+   CENTER INPUTS: Script Popups (Wizard / Unlock modal)
+   ========================= */
+#modal-backdrop .modal{
+  display:flex;
+  flex-direction:column;
+  align-items:center;      /* center everything inside modal */
+}
+
+#modal-backdrop .modal > *{
+  width: 100%;
+  max-width: 520px;        /* modal content width */
+}
+
+#modal-backdrop .modal .row{
+  justify-content: center; /* center the row blocks */
+}
+
+#modal-backdrop .modal input,
+#modal-backdrop .modal select{
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+  display:block;
+}
+
+/* Add Node row: stack buttons under textbox */
+.se-new-node-wrap{
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding-right: 12px; /* extra safety vs scrollbar overlap */
+}
+
+.se-new-node-actions{
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* =========================
+   SCRIPT MODE: "Listening for" inline with Back buttons
+   (put at VERY BOTTOM to override nth-child rules)
+   ========================= */
+
+body.mode-script #ai-brain .match-box .script-listen-row{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:10px !important;
+  flex-wrap:wrap !important;
+
+  padding: 10px 12px !important;
+  font-size: 11px !important;
+  border-top: 1px solid rgba(255,255,255,0.10) !important;
+  opacity: 0.85 !important;
+}
+
+
+
+/* left side text */
+body.mode-script #ai-brain .match-box .script-listen{
+  flex: 1 1 auto;
+  min-width: 240px;
+}
+
+
+/* same-size buttons */
+body.mode-script #ai-brain .match-box .script-nav-btn{
+  height: 22px !important;
+  padding: 2px 10px !important;
+  font-size: 11px !important;
+  border-radius: 8px !important;
+  min-width: 110px !important;     /* ✅ same width */
+}
+
+/* consistent disabled style (covers your [disabled] rule too) */
+body.mode-script #ai-brain .match-box .script-nav-btn:disabled,
+body.mode-script #ai-brain .match-box .script-nav-btn[disabled]{
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+}
+
+/* ===== RESIZE CURSORS (so it "feels" resizable) ===== */
+.resize-handle.n,
+.resize-handle.s { cursor: ns-resize !important; }
+
+.resize-handle.e,
+.resize-handle.w { cursor: ew-resize !important; }
+
+.resize-handle.ne,
+.resize-handle.sw { cursor: nesw-resize !important; }
+
+.resize-handle.nw,
+.resize-handle.se { cursor: nwse-resize !important; }
+
+/* Optional: while actively resizing, keep the same cursor */
+body.resizing .resize-handle.n,
+body.resizing .resize-handle.s { cursor: ns-resize !important; }
+
+body.resizing .resize-handle.e,
+body.resizing .resize-handle.w { cursor: ew-resize !important; }
+
+body.resizing .resize-handle.ne,
+body.resizing .resize-handle.sw { cursor: nesw-resize !important; }
+
+body.resizing .resize-handle.nw,
+body.resizing .resize-handle.se { cursor: nwse-resize !important; }
+
+/* Script mode: hide Ask button in Transcription History */
+body.mode-script #ask-btn{
+  display: none !important;
+}
+
+/* SCRIPT MODE: bottom row padding + button inset */
+body.mode-script #ai-brain .match-box .script-listen-row{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:10px !important;
+  flex-wrap:wrap !important;
+
+  padding: 10px 12px !important;              /* ✅ restores right padding */
+  border-top: 1px solid rgba(255,255,255,0.10) !important;
+  opacity: 0.85 !important;
+}
+
+body.mode-script #ai-brain .match-box .script-nav-row{
+  margin-left: auto !important;                /* ✅ keep right aligned */
+  padding-right: 24px !important;              /* ✅ pulls buttons left from edge */
+}
+
+/* =========================
+   SCRIPT EDITOR — REAL MAXIMIZE (WIDTH + HEIGHT)
+   ========================= */
+
+.script-editor{
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+}
+
+.script-editor .se-left,
+.script-editor .se-right{
+  min-width: 0 !important; /* important in flex layouts */
+}
+
+.script-editor .se-right{
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  overflow: hidden !important; /* scrolling happens inside fields */
+}
+
+/* Make the "say" field expand to fill the empty space */
+.script-editor .se-right .se-field:first-of-type{
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+}
+
+/* The textarea itself grows */
+.script-editor #se-say{
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-height: 220px !important; /* baseline size */
+  resize: none !important;      /* optional */
+  box-sizing: border-box !important;
+}
+
+/* Keep the rest scrollable if needed */
+.script-editor .se-right{
+  overflow: auto !important;
+}

@@ -1,0 +1,22 @@
+{
+  "start": {
+    "say": "Opening spiel: Hi! Just confirming, are you still interested?",
+    "listen_for": ["yes", "no"],
+    "routes": { "yes": "yes_path", "no": "no_path" }
+  },
+  "yes_path": {
+    "say": "Perfect. Quick question: do you prefer morning or afternoon?",
+    "listen_for": ["morning", "afternoon"],
+    "routes": { "morning": "close", "afternoon": "close" }
+  },
+  "no_path": {
+    "say": "No worries. Is it because of price or timing?",
+    "listen_for": ["price", "timing"],
+    "routes": { "price": "close", "timing": "close" }
+  },
+  "close": {
+    "say": "Got it. Thank you — I’ll help you with that.",
+    "listen_for": [],
+    "routes": {}
+  }
+}

@@ -1,0 +1,2580 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>IntAss Dashboard</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+  <div id="app-shell">
+
+    <!-- Custom Titlebar -->
+    <div class="titlebar">
+      <div class="titlebar-left titlebar-drag">
+        <img class="app-icon" id="appIcon" alt="IntAss">
+
+        <!-- ✅ Machine ID pill -->
+        <span id="machine-id-pill" title="Machine ID"></span>
+
+        <!-- ✅ Readable app name -->
+        <span class="titlebar-title">Intelligent Assistant</span>
+      </div>
+
+      <div class="titlebar-right">
+        <button class="winbtn winbtn-min" id="min-btn" title="Minimize">—</button>
+        <button class="winbtn winbtn-max" id="max-btn" title="Maximize">▢</button>
+        <button class="winbtn winbtn-close" id="close-btn" title="Close">✕</button>
+      </div>
+    </div>
+
+    <!-- Status + Opacity -->
+    <div class="status-bar">
+      <div class="status-left">
+        <span id="status-light"></span>
+        <span id="status-text">Starting…</span>
+      </div>
+
+      <div class="slider-container">
+        <span class="mini-label">WINDOW OPACITY</span>
+        <input id="opacity-slider" type="range" min="0.15" max="1.0" step="0.05" value="1.0">
+
+        <span class="divider"></span>
+
+        <span class="mini-label">PRIVACY</span>
+        <label class="ai-switch" title="Toggle privacy mode (screen capture protection)">
+          <input type="checkbox" id="privacy-toggle" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 5px;">
+      <div style="display: flex; gap: 10px; align-items: center;">
+
+        <button id="rescan-btn" class="rescan-btn" title="Rescan Audio Devices">🎧</button>
+
+        <select id="device-select"
+          style="flex: 1; padding: 10px; background: rgba(40,40,40,0.55); color: white; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); font-size: 13px;">
+        </select>
+
+        <button id="capture-btn" class="btn-start">Start</button>
+        <button id="reload-btn" class="secondary">Reload</button>
+        <button id="resources-btn" class="secondary">Resources</button>
+        <button id="mode-btn" class="secondary">Mode: Support</button>
+
+      </div>
+    </div>
+
+    <div class="container">
+
+<!-- TOP PANEL: Primary + AI -->
+<div class="top-panel">
+  <div class="card panel-card" style="border: 1px solid rgba(0,120,212,0.5);">
+
+    <!-- TOGGLES ROW -->
+    <div class="ctx-toolbar" style="display:flex; align-items:center; gap:10px;">
+
+      <!-- ✅ LEFT SIDE — Script Tools -->
+      <div class="ctx-tool" id="script-tools-inline" style="display:none;">
+        <span class="ctx-label">Script</span>
+
+        <div style="display:flex; gap:6px; align-items:center; flex-wrap:nowrap; white-space:nowrap;">
+          <button id="script-open2-btn" class="toolbtn">Open</button>
+          <button id="script-new2-btn" class="toolbtn">New</button>
+          <button id="script-dup-btn" class="toolbtn">Duplicate</button>
+          <button id="script-unlock-btn" class="toolbtn">Unlock/Edit</button>
+          <button id="script-lock-btn" class="toolbtn" style="display:none;">Lock</button>
+
+          <span id="script-status-pill" class="pill locked" style="font-weight:800;">
+            LOCKED
+          </span>
+        </div>
+      </div>
+
+      <!-- ✅ RIGHT SIDE — Primary + AI Toggles -->
+      <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+
+        <div class="ctx-tool">
+          <span class="ctx-label">Primary</span>
+          <label class="ai-switch" title="Toggle Primary Context on/off">
+            <input type="checkbox" id="ctx-toggle" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="ctx-tool">
+          <span class="ctx-label">AI</span>
+          <label class="ai-switch" title="Toggle AI Answer on/off">
+            <input type="checkbox" id="ai-toggle" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- PANES ROW -->
+    <div class="context-split">
+
+      <div class="context-block" id="ctx-pane">
+        <div class="ctx-header">
+          <div id="primary-header-default">
+            <h4 style="margin:0;">Primary Resource Context</h4>
+          </div>
+        </div>
+
+        <!-- Script warnings -->
+        <div id="script-edit-warning"
+          style="display:none;margin:8px 10px 0 10px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,0.06);font-size:12px;">
+          You are editing the live script. Changes affect everyone using this file.
+        </div>
+
+        <div id="script-readonly-msg"
+          style="display:none;margin:6px 10px 0 10px;font-size:12px;opacity:0.8;">
+          You don’t have write access to this file location.
+        </div>
+
+        <div id="ai-brain" class="context-body" tabindex="0">
+          <div class="ai-placeholder">
+            Waiting for question...
+          </div>
+        </div>
+      </div>
+
+      <div class="context-block" id="ai-pane">
+        <div class="ai-header">
+          <h4 style="margin:0;">AI Answer</h4>
+        </div>
+
+        <div id="ai-answer" class="context-body" tabindex="0">
+          <div class="ai-placeholder">
+            Waiting for AI...
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+	  <!-- BOTTOM PANEL: Transcription History (below) -->
+	  <div class="bottom-panel">
+		<div class="card panel-card">
+		  <div class="panel-header">
+			<h4 style="margin:0;">Transcription History</h4>
+
+			<div class="trx-tools">
+			  <button class="toolbtn" id="edit-btn">Edit</button>
+			  <button class="toolbtn" id="ask-btn">Ask</button>
+			  <button class="toolbtn" id="save-btn">Save</button>
+			  <button class="toolbtn" id="load-btn">Load</button>
+			</div>
+		  </div>
+
+		  <div id="output">
+			<div id="final-text"></div>
+
+			<div id="partial-wrap">
+			  <span id="partial-text" style="color: #666; font-style: italic;"></span>
+			</div>
+		  </div>
+
+		  <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+			<button class="toolbtn" id="clear-btn">Clear</button>
+		  </div>
+
+		</div>
+	  </div>
+
+	</div>
+	
+	<!-- Resize handles -->
+	<div class="resize-handle n"  data-edge="n"></div>
+	<div class="resize-handle s"  data-edge="s"></div>
+	<div class="resize-handle e"  data-edge="e"></div>
+	<div class="resize-handle w"  data-edge="w"></div>
+
+	<div class="resize-handle ne" data-edge="ne"></div>
+	<div class="resize-handle nw" data-edge="nw"></div>
+	<div class="resize-handle se" data-edge="se"></div>
+	<div class="resize-handle sw" data-edge="sw"></div>
+
+
+
+  
+<style>
+  /* lightweight modal styling (renderer-local) */
+  .modal-backdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.55);
+    display:none;           /* toggled by showModal() */
+    z-index:9999;
+    pointer-events:auto;    /* block clicks behind */
+  }
+
+  /* ✅ hard-center like the deactivation popup */
+  .modal{
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+
+    width:min(560px, calc(100vw - 40px));
+    background:rgba(20,20,20,0.96);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:16px;
+    padding:16px;
+    box-shadow:0 14px 60px rgba(0,0,0,0.6);
+  }
+
+  /* Smaller PIN inputs */
+  #wiz-pin,
+  #wiz-pin2,
+  #unlock-pin {
+    width: 90px;          /* smaller width */
+    text-align: center;   /* center the digits */
+    font-size: 18px;      /* slightly larger numbers */
+    letter-spacing: 4px;  /* spaced digits look cleaner */
+    padding: 8px 10px;
+  }
+
+
+  .modal h3{ margin:0 0 10px 0; font-size:16px; }
+  .modal .row{ display:flex; gap:10px; align-items:center; margin:10px 0; }
+  .modal label{ font-size:12px; opacity:0.85; display:block; margin-bottom:6px; }
+  .modal input, .modal select{ width:100%; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.14); background:rgba(40,40,40,0.55); color:#fff; }
+  .modal .actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }
+  .modal .note{ font-size:12px; opacity:0.75; }
+
+  .modal .step{ display:none; }
+  .modal .step.active{ display:block; }
+
+  .pill.locked{ background:rgba(255,0,0,0.18); border:1px solid rgba(255,0,0,0.35); }
+  .pill.unlocked{ background:rgba(0,255,0,0.14); border:1px solid rgba(0,255,0,0.28); }
+  .pill.readonly{ background:rgba(255,165,0,0.16); border:1px solid rgba(255,165,0,0.30); }
+
+  /* Hide Reload + Resources when in Script mode */
+  body.mode-script #reload-btn,
+  body.mode-script #resources-btn {
+    display: none !important;
+  }
+</style>
+
+
+<!-- Script Wizard / PIN Modal -->
+<div id="modal-backdrop" class="modal-backdrop">
+  <div class="modal">
+    <h3 id="modal-title">New Script</h3>
+
+    <!-- Step 3 -->
+    <div id="step-3" class="step">
+      <div class="row">
+        <div style="flex:1;">
+          <label>Set Editor PIN (4 digits)</label>
+          <input id="wiz-pin" inputmode="numeric" maxlength="4" placeholder="1234" />
+        </div>
+        <div style="flex:1;">
+          <label>Confirm PIN</label>
+          <input id="wiz-pin2" inputmode="numeric" maxlength="4" placeholder="1234" />
+        </div>
+      </div>
+      <label>Hint (optional)</label>
+      <input id="wiz-hint" placeholder="Only team leads should know this." />
+      <div class="row" style="margin-top:14px; justify-content:flex-end;">
+        <button id="wiz-create" class="toolbtn">Create</button>
+      </div>
+    </div>
+    
+
+    <!-- Unlock PIN -->
+    <div id="step-unlock" class="step">
+      <label>Enter editor PIN</label>
+      <input id="unlock-pin" inputmode="numeric" maxlength="4" placeholder="1234" />
+      <div id="unlock-error" class="note" style="display:none; color:#ff8a8a; margin-top:8px;">Incorrect PIN</div>
+    </div>
+
+    <div class="actions">
+      <button id="wiz-cancel" class="toolbtn">Cancel</button>
+      <button id="wiz-back" class="toolbtn" style="display:none;">Back</button>
+      <button id="wiz-next" class="toolbtn">Next</button>
+      <button id="wiz-unlock" class="toolbtn" style="display:none;">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  
+	let currentScriptPath = "";     // full file path of the opened/created script
+	let scriptLocked = true;        // locked by default
+	let scriptReadOnly = false;     // set by main process
+	let currentScriptMtimeMs = 0; // for "file changed" check on save
+	
+	let appMode = "support";
+	let scriptTree = null;
+	let scriptNodeId = "start";
+  let scriptHistory = []; // <- back stack of previous nodeIds
+
+  
+	const { ipcRenderer } = require('electron');
+	
+	const fs = require("fs");
+	const path = require("path");
+	
+	let scriptEditorOpen = false;
+	let editorNodeId = "start";
+
+	// anti-chaos
+	let lastBranchAt = 0;
+	const BRANCH_COOLDOWN_MS = 1200;
+
+
+function scriptStart() {
+  if (!ensureScriptLoaded()) return;
+
+  scriptEditorOpen = false;
+  editorNodeId = "start";
+  scriptNodeId = "start";
+  scriptHistory = []; // ✅ reset
+  renderScript();
+}
+
+
+function normalizeHeard(t) {
+  return String(t || "")
+  .toLowerCase()
+  .replace(/[^\w\s]/g, " ")
+  .replace(/\s+/g, " ")
+  .trim();
+}
+
+function goToNode(nextId, { pushHistory = true } = {}) {
+  if (!ensureScriptLoaded()) return;
+
+  if (!nextId || !scriptTree.nodes?.[nextId]) return;
+
+  if (pushHistory) {
+    // avoid pushing duplicates
+    const last = scriptHistory[scriptHistory.length - 1];
+    if (last !== scriptNodeId) scriptHistory.push(scriptNodeId);
+  }
+
+  scriptNodeId = nextId;
+  renderScript();
+}
+
+function goBack() {
+  if (!ensureScriptLoaded()) return;
+
+  const prev = scriptHistory.pop();
+  if (!prev) return; // no history
+
+  scriptNodeId = prev;
+  renderScript();
+}
+
+function goBackToStart() {
+  if (!ensureScriptLoaded()) return;
+
+  scriptHistory = [];
+  scriptNodeId = "start";
+  renderScript();
+}
+
+
+	function detectIntent(heard, listenFor) {
+	  const h = normalizeHeard(heard);
+
+	  // yes/no with word boundaries (prevents "yesterday" -> "yes")
+	  if ((listenFor || []).includes("yes") && /\b(yes|yeah|yep|sure|correct|okay|ok)\b/.test(h)) return "yes";
+	  if ((listenFor || []).includes("no")  && /\b(no|nope|nah|not)\b/.test(h)) return "no";
+
+	  // keyword/phrase match
+	  for (const k of (listenFor || [])) {
+		if (k === "yes" || k === "no") continue;
+		const kk = normalizeHeard(k);
+		if (!kk) continue;
+		if (new RegExp(`\\b${kk.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(h)) return k;
+	  }
+
+	  return "";
+	}
+
+function renderScript() {
+  if (appMode !== "script") return;
+
+  const box = document.getElementById("ai-brain");
+  if (!box) return;
+
+  if (!ensureScriptLoaded()) return;
+
+  const node = scriptTree.nodes?.[scriptNodeId];
+  if (!node) {
+    box.innerHTML = `<div class="ai-placeholder">Missing node: ${escapeHtml(scriptNodeId)}</div>`;
+    return;
+  }
+
+  const say = String(node.say || "");
+  const listen = node.listen_for || [];
+  const opts = listen
+    .map(x => `<span class="pill pill-click" data-k="${escapeHtml(x)}">${escapeHtml(x)}</span>`)
+    .join(" ");
+
+  box.innerHTML = `
+    <div class="match-box script-match">
+      <div class="script-title">
+        <div>Next line to say:</div>
+      </div>
+
+
+      <div class="script-say">${escapeHtml(say)}</div>
+
+      <div class="script-listen-row">
+        <div class="script-listen">
+          Listening for: ${opts || "<i>No response required</i>"}
+        </div>
+
+        <div class="script-nav-row">
+          <button class="script-nav-btn" id="script-back-btn" ${scriptHistory.length ? "" : "disabled"}>Back</button>
+          <button class="script-nav-btn" id="script-start-btn">Back to Start</button>
+        </div>
+      </div>
+
+    </div>
+  `;
+
+  box.scrollTop = 0;
+
+  // Back buttons
+  box.querySelector("#script-back-btn")?.addEventListener("click", () => {
+    goBack();
+  });
+
+  box.querySelector("#script-start-btn")?.addEventListener("click", () => {
+    goBackToStart();
+  });
+
+  // Clickable keywords
+  box.querySelectorAll(".pill-click").forEach(p => {
+    p.addEventListener("click", () => {
+      if (appMode !== "script") return;
+      if (!ensureScriptLoaded()) return;
+      if (scriptEditorOpen) return;
+
+      const now = Date.now();
+      if (now - lastBranchAt < BRANCH_COOLDOWN_MS) return;
+
+      const k = p.dataset.k || "";
+      const cur = scriptTree.nodes?.[scriptNodeId];
+      const next = cur?.routes?.[k];
+      if (!next) return;
+
+      lastBranchAt = now;
+      goToNode(next, { pushHistory: true });
+    });
+  });
+}
+	
+
+  function ensureNodeOrder() {
+    if (!scriptTree?.meta) scriptTree.meta = {};
+    if (!Array.isArray(scriptTree.meta.node_order)) {
+      // Fallback for older scripts: preserve existing key insertion order
+      const keys = Object.keys(scriptTree.nodes || {});
+      // keep "start" first if present
+      const rest = keys.filter(k => k !== "start");
+      scriptTree.meta.node_order = (keys.includes("start") ? ["start"] : []).concat(rest);
+    }
+  }
+
+  function rebuildNodeOrderIfNeeded() {
+    ensureNodeOrder();
+    const seen = new Set(scriptTree.meta.node_order);
+    // Add any missing nodes (created elsewhere / legacy)
+    for (const id of Object.keys(scriptTree.nodes || {})) {
+      if (!seen.has(id)) scriptTree.meta.node_order.push(id);
+    }
+    // Remove nodes that no longer exist
+    scriptTree.meta.node_order = scriptTree.meta.node_order.filter(id => !!scriptTree.nodes?.[id]);
+    // Force start at top
+    if (scriptTree.nodes?.start) {
+      scriptTree.meta.node_order = ["start"].concat(scriptTree.meta.node_order.filter(x => x !== "start"));
+    }
+  }
+
+
+  // ---------- Script header (UI state) ----------
+  function getScriptDisplayName() {
+    return (scriptTree?.meta?.name || "").trim() || "No script loaded";
+  }
+  function refreshScriptHeader() {
+    const def = document.getElementById("primary-header-default");
+    const scr = document.getElementById("primary-header-script");
+    if (!def || !scr) return;
+
+    const inScriptMode = (appMode === "script");
+    def.style.display = inScriptMode ? "none" : "block";
+    scr.style.display = inScriptMode ? "block" : "none";
+    if (!inScriptMode) return;
+
+    const titleEl = document.getElementById("script-title");
+    const pathEl  = document.getElementById("script-path");
+    const pillEl  = document.getElementById("script-status-pill");
+    const lockBtn = document.getElementById("script-lock-btn");
+    const warnEl  = document.getElementById("script-edit-warning");
+    const roMsg   = document.getElementById("script-readonly-msg");
+
+    if (titleEl) titleEl.textContent = getScriptDisplayName();
+    if (pathEl)  pathEl.textContent = currentScriptPath ? `Location: ${currentScriptPath}` : "";
+
+    // status pill
+    const pillText = scriptReadOnly ? "READ-ONLY" : (scriptLocked ? "LOCKED" : "UNLOCKED");
+    if (pillEl) {
+      pillEl.textContent = pillText;
+      pillEl.classList.remove("locked", "unlocked", "readonly");
+      pillEl.classList.add(scriptReadOnly ? "readonly" : (scriptLocked ? "locked" : "unlocked"));
+    }
+
+    if (roMsg) roMsg.style.display = scriptReadOnly ? "block" : "none";
+    if (warnEl) warnEl.style.display = (!scriptLocked && !scriptReadOnly) ? "block" : "none";
+    if (lockBtn) lockBtn.style.display = (!scriptLocked && !scriptReadOnly) ? "inline-flex" : "none";
+
+    // disable unlock/edit if no script
+    const unlockBtn = document.getElementById("script-unlock-btn");
+    if (unlockBtn) unlockBtn.disabled = (!currentScriptPath || scriptReadOnly);
+  }
+
+  // ---------- Modal helpers ----------
+  const modal = {
+    backdrop: () => document.getElementById("modal-backdrop"),
+    title: () => document.getElementById("modal-title"),
+    steps: {
+      s1: () => document.getElementById("step-1"),
+      s2: () => document.getElementById("step-2"),
+      s3: () => document.getElementById("step-3"),
+      unlock: () => document.getElementById("step-unlock"),
+    },
+    btnCancel: () => document.getElementById("wiz-cancel"),
+    btnBack: () => document.getElementById("wiz-back"),
+    btnNext: () => document.getElementById("wiz-next"),
+    btnCreate: () => document.getElementById("wiz-create"),
+    btnUnlock: () => document.getElementById("wiz-unlock"),
+    modeSel: () => document.getElementById("wiz-save-mode"),
+    pickFolder: () => document.getElementById("wiz-pick-folder"),
+    folderLbl: () => document.getElementById("wiz-folder"),
+    name: () => document.getElementById("wiz-name"),
+    filePrev: () => document.getElementById("wiz-file-preview"),
+    pin: () => document.getElementById("wiz-pin"),
+    pin2: () => document.getElementById("wiz-pin2"),
+    hint: () => document.getElementById("wiz-hint"),
+    unlockPin: () => document.getElementById("unlock-pin"),
+    unlockErr: () => document.getElementById("unlock-error"),
+  };
+
+  function showModal() { const b = modal.backdrop(); if (b) b.style.display = "block"; }
+  function hideModal() { const b = modal.backdrop(); if (b) b.style.display = "none"; }
+  function showStep(which) {
+    for (const k of Object.keys(modal.steps)) {
+      const el = modal.steps[k]();
+      if (el) el.classList.toggle("active", k === which);
+    }
+  }
+  function safeFileBase(name) {
+    return String(name || "new_script")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 80) || "new_script";
+  }
+
+  let wizardState = {
+    mode: "new",
+    step: 3,
+    targetPath: "",   // exact file path chosen by Save dialog
+  };
+
+
+  function openScriptWizardAtPin({ mode, targetPath }) {
+    wizardState = { mode, step: 3, targetPath: String(targetPath || "") };
+
+    modal.title().textContent = (mode === "duplicate") ? "Duplicate Script" : "New Script";
+
+    // ✅ start directly at PIN step
+    showStep("s3");
+
+    // ✅ hide step navigation buttons
+    modal.btnBack().style.display = "none";
+    modal.btnNext().style.display = "none";
+    modal.btnCreate().style.display = "inline-flex";
+
+    modal.btnUnlock().style.display = "none";
+    modal.unlockErr().style.display = "none";
+
+    // clear fields
+    modal.pin().value = "";
+    modal.pin2().value = "";
+    modal.hint().value = "";
+
+    showModal();
+    modal.pin()?.focus();
+  }
+
+
+
+  async function openUnlockModal() {
+    modal.title().textContent = "Unlock to Edit";
+    showStep("unlock");
+    modal.btnBack().style.display = "none";
+    modal.btnNext().style.display = "none";
+    modal.btnCreate().style.display = "none";
+    modal.btnUnlock().style.display = "inline-flex";
+    modal.unlockPin().value = "";
+    modal.unlockErr().style.display = "none";
+    showModal();
+    modal.unlockPin().focus();
+  }
+
+function scriptOnTranscript(text) {
+	  if (appMode !== "script") return;
+
+	  if (!ensureScriptLoaded()) return;
+
+
+	  if (scriptEditorOpen) return; // don't auto-branch while editing
+
+	  const now = Date.now();
+	  if (now - lastBranchAt < BRANCH_COOLDOWN_MS) return;
+
+	  const node = scriptTree.nodes?.[scriptNodeId];
+
+	  if (!node) return;
+
+	  const listenFor = node.listen_for || [];
+	  if (!listenFor.length) return;
+
+	  const intent = detectIntent(text, listenFor);
+	  if (!intent) return;
+
+	  const next = node.routes?.[intent];
+	  if (!next) return;
+
+    lastBranchAt = now;
+    goToNode(next, { pushHistory: true });
+
+	}
+
+function ensureScriptLoaded() {
+  const ok = (scriptTree && currentScriptPath && scriptTree.nodes);
+  if (ok) return true;
+
+  if (appMode === "script") {
+    showScriptLoadMessage(); // ✅ centered
+  } else {
+    showCtxWaitingMessage();
+  }
+
+  setStatus("No script loaded. Click Open or New.", "warn");
+  return false;
+}
+
+
+function listNodeIds() {
+  if (!scriptTree?.nodes) return [];
+  rebuildNodeOrderIfNeeded();
+  return scriptTree.meta.node_order; // ✅ creation order: oldest first
+}
+
+function nodeExists(id) {
+  return !!scriptTree?.nodes?.[id];
+}
+
+function validateScriptTree(tree) {
+  if (!tree || typeof tree !== "object") return "Invalid script object";
+  if (!tree.nodes || typeof tree.nodes !== "object") return "Missing 'nodes' object";
+  if (!tree.nodes.start) return 'Missing required node: "start"';
+
+  for (const [id, node] of Object.entries(tree.nodes)) {
+    if (!node || typeof node !== "object") return `Invalid node: ${id}`;
+    if (typeof node.say !== "string") return `Node ${id}: 'say' must be a string`;
+    if (node.listen_for && !Array.isArray(node.listen_for)) return `Node ${id}: 'listen_for' must be an array`;
+    if (node.routes && typeof node.routes !== "object") return `Node ${id}: 'routes' must be an object`;
+
+    // routes must point to existing nodes
+    for (const [k, next] of Object.entries(node.routes || {})) {
+      if (!tree.nodes[next]) return `Node ${id}: route "${k}" points to missing node "${next}"`;
+    }
+  }
+  return "";
+}
+
+// Tutorial bridge (safe: only does anything when called explicitly)
+window.setCurrentScriptDirect = function (scriptObj, fakePath = "__tutorial__.json") {
+  try {
+    currentScriptPath = fakePath;     // gives editor a “loaded script”
+    scriptTree = scriptObj;
+    scriptNodeId = "start";
+    editorNodeId = "start";
+
+    scriptReadOnly = false;
+    scriptLocked = false;             // <-- THIS is what actually enables editing
+
+    refreshScriptHeader();
+    renderScript();
+    openScriptEditor();               // <-- THIS actually opens edit mode
+  } catch (e) {
+    console.error("setCurrentScriptDirect failed:", e);
+  }
+};
+
+
+function openScriptEditor() {
+  if (!ensureScriptLoaded()) return;
+  scriptEditorOpen = true;
+  if (!nodeExists(editorNodeId)) editorNodeId = "start";
+  renderScriptEditor();
+}
+
+function closeScriptEditor() {
+  scriptEditorOpen = false;
+  renderScript();
+}
+
+function buildGraphFromScript(tree) {
+  const nodes = tree?.nodes || {};
+  const edges = [];
+
+  for (const [from, node] of Object.entries(nodes)) {
+    const routes = node?.routes || {};
+    for (const [k, to] of Object.entries(routes)) {
+      if (typeof to === "string" && to.trim()) {
+        edges.push({ from, to: to.trim(), label: String(k || "").trim() });
+      }
+    }
+  }
+
+  return { nodes: Object.keys(nodes), edges };
+}
+
+
+function layoutGraphTopDown(graph, startId = "start") {
+  const adj = new Map();
+  for (const id of graph.nodes) adj.set(id, []);
+  for (const e of graph.edges) {
+    const a = e.from, b = e.to;
+    if (!adj.has(a)) adj.set(a, []);
+    adj.get(a).push(b);
+  }
+
+  const depth = new Map();
+  const q = [];
+  if (adj.has(startId)) {
+    depth.set(startId, 0);
+    q.push(startId);
+  }
+
+  while (q.length) {
+    const cur = q.shift();
+    const d = depth.get(cur);
+    for (const nxt of (adj.get(cur) || [])) {
+      if (!depth.has(nxt)) {
+        depth.set(nxt, d + 1);
+        q.push(nxt);
+      }
+    }
+  }
+
+  const maxDepth = Math.max(0, ...Array.from(depth.values()));
+  for (const id of graph.nodes) {
+    if (!depth.has(id)) depth.set(id, maxDepth + 1);
+  }
+
+  const layers = new Map();
+  for (const id of graph.nodes) {
+    const d = depth.get(id) || 0;
+    if (!layers.has(d)) layers.set(d, []);
+    layers.get(d).push(id);
+  }
+
+  for (const [d, ids] of layers.entries()) {
+    ids.sort((a, b) => a.localeCompare(b));
+    layers.set(d, ids);
+  }
+
+  // sizes for single-line node
+  const NODE_W = 170;
+  const NODE_H = 44;
+  const GAP_X = 26;
+  const GAP_Y = 48;
+  const PAD = 30;
+
+  const positions = new Map();
+  let maxCols = 1;
+
+  const depths = Array.from(layers.keys()).sort((a, b) => a - b);
+  for (const d of depths) {
+    const ids = layers.get(d);
+    maxCols = Math.max(maxCols, ids.length);
+    for (let i = 0; i < ids.length; i++) {
+      const x = PAD + i * (NODE_W + GAP_X);
+      const y = PAD + d * (NODE_H + GAP_Y);
+      positions.set(ids[i], { x, y });
+    }
+  }
+
+  const width = PAD * 2 + maxCols * NODE_W + (maxCols - 1) * GAP_X;
+  const height = PAD * 2 + (depths.length || 1) * NODE_H + ((depths.length || 1) - 1) * GAP_Y;
+
+  return { positions, width, height, NODE_W, NODE_H };
+}
+
+
+function buildFlowchartSvg(tree) {
+  const graph = buildGraphFromScript(tree);
+  const { positions, width, height, NODE_W, NODE_H } = layoutGraphTopDown(graph, "start");
+
+  const esc = (s) =>
+    String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
+  // cubic bezier point (t=0..1)
+  const bezPoint = (p0, p1, p2, p3, t) => {
+    const u = 1 - t;
+    const tt = t * t;
+    const uu = u * u;
+    const uuu = uu * u;
+    const ttt = tt * t;
+    return (
+      uuu * p0 +
+      3 * uu * t * p1 +
+      3 * u * tt * p2 +
+      ttt * p3
+    );
+  };
+
+  const nodeBoxes = graph.nodes.map((id) => {
+    const p = positions.get(id) || { x: 30, y: 30 };
+    const isStart = id === "start";
+
+    // classify nodes
+    const n = tree.nodes?.[id] || {};
+    const listenCount = (n.listen_for || []).length;
+    const routeCount  = Object.keys(n.routes || {}).length;
+
+    const isTerminal  = routeCount === 0;                // no outgoing edges
+    const isDecision  = listenCount > 0 && routeCount > 1; // multiple choices
+
+    const cls = [
+      "node",
+      isStart ? "start" : "",
+      isTerminal ? "end" : "",
+      isDecision ? "decision" : "",
+    ].filter(Boolean).join(" ");
+
+    return `
+      <g class="${cls}" data-id="${esc(id)}" transform="translate(${p.x},${p.y})">
+        <rect rx="12" ry="12" width="${NODE_W}" height="${NODE_H}"></rect>
+        <text class="node-id"
+              x="${NODE_W / 2}"
+              y="${Math.round(NODE_H / 2) + 5}"
+              text-anchor="middle"
+              dominant-baseline="middle">
+          ${esc(id)}
+        </text>
+      </g>
+    `;
+  }).join("");
+
+
+  const edges = graph.edges.map((e) => {
+    const a = positions.get(e.from);
+    const b = positions.get(e.to);
+    if (!a || !b) return "";
+
+    const x1 = a.x + NODE_W / 2;
+    const y1 = a.y + NODE_H;
+    const x2 = b.x + NODE_W / 2;
+    const y2 = b.y;
+
+    const midY = (y1 + y2) / 2;
+
+    // label position ~ middle of curve
+    const lx = bezPoint(x1, x1, x2, x2, 0.5);
+    const ly = bezPoint(y1, midY, midY, y2, 0.5) - 8;
+
+    const label = (e.label || "").trim();
+    const labelSvg = label
+      ? `<text class="edge-label" x="${lx}" y="${ly}" text-anchor="middle">${esc(label)}</text>`
+      : "";
+
+    return `
+      <path class="edge" d="M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}" marker-end="url(#arrow)"></path>
+      ${labelSvg}
+    `;
+  }).join("");
+
+  return `
+  <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+        <path d="M0,0 L9,3 L0,6 Z"></path>
+      </marker>
+    </defs>
+
+    <rect x="0" y="0" width="${width}" height="${height}" class="bg"></rect>
+    ${edges}
+    ${nodeBoxes}
+  </svg>
+  `;
+}
+
+
+
+function openFlowPopup() {
+  if (!ensureScriptLoaded()) return;
+
+  const svg = buildFlowchartSvg(scriptTree);
+
+  const w = window.open("", "scriptFlowPopup", "width=980,height=720,resizable=yes,scrollbars=yes");
+  if (!w) {
+    alert("Popup blocked. Please allow popups for this app.");
+    return;
+  }
+
+  w.document.open();
+  w.document.write(`
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Script Flowchart (Node IDs)</title>
+  <style>
+    body { margin:0; background:#0f1116; color:#e9f1ff; font-family: "Segoe UI", sans-serif; }
+    .top { position:sticky; top:0; z-index:10; padding:10px 12px; background:rgba(15,17,22,0.92);
+          display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.08); }
+    .hint { opacity:0.75; font-size:12px; }
+    .btn { padding:7px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.18);
+          background: rgba(255,255,255,0.06); color:#e9f1ff; cursor:pointer; }
+
+    /* ✅ center the chart */
+      .wrap{
+        height: calc(100vh - 52px);
+        overflow: auto;
+
+        display: flex;              /* ✅ center horizontally */
+        justify-content: center;    /* ✅ horizontal center */
+        align-items: flex-start;    /* keep top aligned */
+        padding: 20px;
+        box-sizing: border-box;
+      }
+
+      /* stage wrapper */
+      .stage-wrap{
+        display: inline-block;
+      }
+
+
+    svg .bg { fill: transparent; }
+
+    svg .edge { fill:none; stroke: rgba(255,255,255,0.35); stroke-width: 2; }
+    svg marker path { fill: rgba(255,255,255,0.55); }
+
+    /* base */
+    svg .node rect{
+      fill: rgba(80,120,255,0.10);
+      stroke: rgba(255,255,255,0.18);
+      stroke-width: 1.5;
+    }
+
+    /* start node */
+    svg .node.start rect{
+      fill: rgba(0,180,255,0.18);
+      stroke: rgba(0,180,255,0.75);
+    }
+
+    /* decision node (multiple routes) */
+    svg .node.decision rect{
+      fill: rgba(255,180,0,0.14);
+      stroke: rgba(255,180,0,0.55);
+    }
+
+    /* end/terminal node (no routes) */
+    svg .node.end rect{
+      fill: rgba(255,80,120,0.14);
+      stroke: rgba(255,80,120,0.50);
+    }
+
+
+
+    /* ✅ 2-line text styles */
+    /* Node ID */
+    svg .node text.node-id {
+      fill: #ffffff !important;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    /* Listening keywords */
+    svg .node text.node-listen {
+      fill: #ffffff !important;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* Optional: muted fallback */
+    svg .node text.node-listen.muted {
+      fill: #ffffff !important;
+      opacity: 0.5;   /* lighter but still white */
+    }
+
+
+    .zoom { display:flex; gap:8px; align-items:center; }
+
+    svg .edge-label{
+    font-size: 12px;
+    font-weight: 800;
+    fill: rgba(233,241,255,0.92);
+
+    /* readable on dark edges */
+    paint-order: stroke;
+    stroke: rgba(15,17,22,0.95);
+    stroke-width: 4px;
+    stroke-linejoin: round;
+  }
+
+  </style>
+
+</head>
+<body>
+  <div class="top">
+    <div class="hint">Read-only flowchart (Node IDs only)</div>
+    <div class="zoom">
+      <button class="btn" id="zout">-</button>
+      <button class="btn" id="zin">+</button>
+      <button class="btn" onclick="window.close()">Close</button>
+    </div>
+  </div>
+  <div class="wrap">
+    <div id="stage" style="transform-origin: top center; transform: scale(1);">
+      ${svg}
+    </div>
+  </div>
+
+  <script>
+    let s = 1;
+    const stage = document.getElementById("stage");
+    document.getElementById("zin").addEventListener("click", () => {
+      s = Math.min(2.25, s + 0.1);
+      stage.style.transform = "scale(" + s.toFixed(2) + ")";
+    });
+    document.getElementById("zout").addEventListener("click", () => {
+      s = Math.max(0.5, s - 0.1);
+      stage.style.transform = "scale(" + s.toFixed(2) + ")";
+    });
+  <\/script>
+</body>
+</html>
+  `);
+  w.document.close();
+}
+
+function renderScriptEditor() {
+  if (appMode !== "script") return;
+
+  const box = document.getElementById("ai-brain");
+  if (!box) return;
+
+  if (!ensureScriptLoaded()) return;
+
+  const ids = listNodeIds();
+  if (!nodeExists(editorNodeId)) editorNodeId = "start";
+
+  const node = scriptTree.nodes[editorNodeId] || { say:"", listen_for:[], routes:{} };
+  const listenStr = (node.listen_for || []).join(", ");
+
+  const routeRows = Object.entries(node.routes || {}).map(([k, next]) => {
+    const opts = ids.map(id => `<option value="${escapeHtml(id)}" ${id===next?"selected":""}>${escapeHtml(id)}</option>`).join("");
+    return `
+      <div class="se-row">
+        <input class="k" data-route-key value="${escapeHtml(k)}" placeholder="keyword (must be in listen_for)" />
+        <select class="n" data-route-next>${opts}</select>
+		<button class="se-btn danger" data-route-del>Del</button>
+
+
+      </div>
+    `;
+  }).join("");
+
+  const nodeListHtml = ids.map(id => `
+    <div class="se-node ${id===editorNodeId?"active":""}" data-node-id="${escapeHtml(id)}">${escapeHtml(id)}</div>
+  `).join("");
+
+  box.innerHTML = `
+    <div class="script-editor">
+      <div class="se-left">
+        <div class="se-title">Script Nodes</div>
+        <div class="se-actions">
+          <button class="se-btn" id="se-add-node">+ Add Node</button>
+          <button class="se-btn danger" id="se-del-node">Delete</button>
+          <button class="se-btn" id="se-view-flow">View Flow</button>
+          <button class="se-btn" id="se-close">Close</button>
+        </div>
+        <div class="se-list" id="se-node-list">${nodeListHtml}</div>
+      </div>
+
+      <div class="se-right">
+        <div class="se-title">Edit Node: <span style="opacity:0.85;">${escapeHtml(editorNodeId)}</span></div>
+
+        <div class="se-field">
+          <label>Agent line (say)</label>
+          <textarea id="se-say" placeholder="What the agent should say...">${escapeHtml(node.say || "")}</textarea>
+        </div>
+
+        <div class="se-field">
+          <label>Listening keywords (comma separated)</label>
+          <input id="se-listen" value="${escapeHtml(listenStr)}" placeholder="yes, no, morning, afternoon" />
+        </div>
+
+        <div class="se-field">
+          <label>Routes (keyword → next node)</label>
+          <div class="se-rows" id="se-routes">
+            ${routeRows || `<div class="se-msg">No routes yet.</div>`}
+          </div>
+          <div class="se-actions">
+            <button class="se-btn" id="se-add-route">+ Add Route</button>
+          </div>
+        </div>
+
+        <div class="se-actions">
+          <button class="se-btn" id="se-save">Save Script</button>
+          <button class="se-btn" id="se-test">Test From Start</button>
+        </div>
+
+        <div class="se-msg" id="se-msg"></div>
+      </div>
+    </div>
+  `;
+
+  // node pick
+  box.querySelectorAll(".se-node").forEach(el => {
+    el.addEventListener("click", () => {
+      editorNodeId = el.dataset.nodeId;
+      renderScriptEditor();
+    });
+  });
+
+  // close
+  box.querySelector("#se-close").addEventListener("click", () => {
+    closeScriptEditor();
+  });
+
+  // view flow
+  box.querySelector("#se-view-flow")?.addEventListener("click", () => {
+    openFlowPopup();
+  });
+
+  // add node (inline UI, no prompt)
+  box.querySelector("#se-add-node").addEventListener("click", () => {
+    const msg = box.querySelector("#se-msg");
+    if (msg) msg.textContent = "";
+
+    // if already open, just focus it
+    let wrap = box.querySelector("#se-new-node-wrap");
+    if (wrap) {
+      wrap.style.display = "flex";
+      const inp = wrap.querySelector("#se-new-node-id");
+      inp?.focus();
+      inp?.select?.();
+      return;
+    }
+
+    const actions = box.querySelector(".se-left .se-actions");
+    if (!actions) return;
+
+    wrap = document.createElement("div");
+    wrap.id = "se-new-node-wrap";
+    wrap.className = "se-new-node-wrap";
+    wrap.innerHTML = `
+      <input id="se-new-node-id" class="se-new-node-id" placeholder="new_node_id" />
+      <div class="se-new-node-actions">
+        <button class="se-btn" id="se-new-node-create">Create</button>
+        <button class="se-btn danger" id="se-new-node-cancel">Cancel</button>
+      </div>
+    `;
+
+
+    actions.insertAdjacentElement("afterend", wrap);
+
+    const inp = wrap.querySelector("#se-new-node-id");
+    const btnCreate = wrap.querySelector("#se-new-node-create");
+    const btnCancel = wrap.querySelector("#se-new-node-cancel");
+
+    function closeRow() {
+      wrap.style.display = "none";
+    }
+
+    function createNode() {
+      const raw = String(inp?.value || "").trim();
+      if (!raw) return;
+
+      const id = raw
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, "_")
+        .replace(/^_+|_+$/g, "");
+
+      if (!id) {
+        if (msg) msg.textContent = "Invalid node id.";
+        return;
+      }
+      if (scriptTree.nodes[id]) {
+        if (msg) msg.textContent = "Node already exists: " + id;
+        return;
+      }
+
+      scriptTree.nodes[id] = { say: "", listen_for: [], routes: {} };
+      ensureNodeOrder();
+      scriptTree.meta.node_order.push(id); // ✅ new nodes go to bottom (newest last)
+      editorNodeId = id;
+      renderScriptEditor();
+    }
+
+    btnCreate?.addEventListener("click", createNode);
+    btnCancel?.addEventListener("click", closeRow);
+
+    inp?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); createNode(); }
+      if (e.key === "Escape") { e.preventDefault(); closeRow(); }
+    });
+
+    inp?.focus();
+  });
+
+
+
+
+  // delete node
+  box.querySelector("#se-del-node").addEventListener("click", () => {
+    if (editorNodeId === "start") {
+      const msg = box.querySelector("#se-msg");
+      msg.textContent = 'Cannot delete "start"';
+      return;
+    }
+    if (!confirm("Delete node: " + editorNodeId + " ?")) return;
+
+    // remove references
+	for (const n of Object.values(scriptTree.nodes)) {
+	if (n?.routes) {
+		for (const [k, v] of Object.entries(n.routes)) {
+		if (v === editorNodeId) delete n.routes[k];
+		}
+	}
+	}
+
+
+    delete scriptTree.nodes[editorNodeId];
+    ensureNodeOrder();
+    scriptTree.meta.node_order = scriptTree.meta.node_order.filter(x => x !== editorNodeId);
+    editorNodeId = "start";
+    renderScriptEditor();
+  });
+
+  // add route
+  box.querySelector("#se-add-route").addEventListener("click", () => {
+    const msg = box.querySelector("#se-msg");
+    msg.textContent = "";
+    const routesDiv = box.querySelector("#se-routes");
+    const ids2 = listNodeIds();
+    const opts2 = ids2.map(id => `<option value="${escapeHtml(id)}">${escapeHtml(id)}</option>`).join("");
+
+    const row = document.createElement("div");
+    row.className = "se-row";
+    row.innerHTML = `
+      <input class="k" data-route-key placeholder="keyword (must be in listen_for)" />
+      <select class="n" data-route-next>${opts2}</select>
+      <button class="se-btn danger" data-route-del>Del</button>
+    `;
+    routesDiv.appendChild(row);
+
+    row.querySelector("[data-route-del]").addEventListener("click", () => row.remove());
+  });
+
+  // delete existing routes
+  box.querySelectorAll("[data-route-del]").forEach(btn => {
+    btn.addEventListener("click", () => btn.closest(".se-row")?.remove());
+  });
+
+  // save
+  box.querySelector("#se-save").addEventListener("click", async () => {
+    const msg = box.querySelector("#se-msg");
+    msg.textContent = "";
+
+    const say = box.querySelector("#se-say").value || "";
+    const listen = box.querySelector("#se-listen").value
+      .split(",")
+      .map(x => x.trim())
+      .filter(Boolean);
+
+    const routes = {};
+    box.querySelectorAll("#se-routes .se-row").forEach(r => {
+      const k = (r.querySelector("[data-route-key]")?.value || "").trim();
+      const n = (r.querySelector("[data-route-next]")?.value || "").trim();
+      if (!k || !n) return;
+      routes[k] = n;
+    });
+
+    scriptTree.nodes[editorNodeId] = { say, listen_for: listen, routes };
+
+    const err = validateScriptTree(scriptTree);
+    if (err) {
+      msg.textContent = "Fix: " + err;
+      return;
+    }
+
+    // write back to file (same places we load from)
+// write back using main process (packaged-safe)
+	try {
+	  const res = await ipcRenderer.invoke("script:save", {
+        path: currentScriptPath,
+        script: scriptTree,
+        expectedMtimeMs: currentScriptMtimeMs
+      });
+if (res?.ok) {
+        if (typeof res.mtimeMs === "number") currentScriptMtimeMs = res.mtimeMs;
+        msg.textContent = "Saved.";
+        setStatus("Script saved", "ready");
+      } else if (res?.conflict) {
+        msg.textContent = "Save blocked: file changed by someone else. Re-open the script, then try again.";
+        setStatus("Script save conflict", "warn");
+      } else {
+        msg.textContent = "Save failed: " + (res?.error || "Unknown error");
+        setStatus("Script save failed", "error");
+      }
+	} catch (e) {
+	  msg.textContent = "Save failed: " + (e?.message || e);
+	  setStatus("Script save failed", "error");
+	}  
+    
+  });
+
+  // test from start
+  box.querySelector("#se-test").addEventListener("click", () => {
+    scriptNodeId = "start";
+    closeScriptEditor();
+    renderScript();
+    setStatus("Script test started", "ready");
+  });
+}
+
+
+	let resizing = false;
+	let lastX = 0;
+	let lastY = 0;
+	let edge = "";
+	let activeHandle = null;
+
+	function onPointerDown(e) {
+	  const h = e.currentTarget;
+	  edge = h.dataset.edge || "";
+	  resizing = true;
+	  activeHandle = h;
+
+	  lastX = e.screenX;
+	  lastY = e.screenY;
+
+	  // ✅ THIS is what makes dragging keep working even if cursor leaves the webview
+	  try { h.setPointerCapture(e.pointerId); } catch {}
+
+	  document.body.classList.add("resizing");
+	  e.preventDefault();
+	  e.stopPropagation();
+	}
+
+	function onPointerMove(e) {
+	  if (!resizing) return;
+
+	  const dx = e.screenX - lastX;
+	  const dy = e.screenY - lastY;
+
+	  lastX = e.screenX;
+	  lastY = e.screenY;
+
+	  ipcRenderer.send("window:resizeBy", { dx, dy, edge });
+	  e.preventDefault();
+	}
+
+	function onPointerUp(e) {
+	  if (!resizing) return;
+
+	  resizing = false;
+	  document.body.classList.remove("resizing");
+
+	  try {
+		if (activeHandle) activeHandle.releasePointerCapture(e.pointerId);
+	  } catch {}
+
+	  activeHandle = null;
+	  edge = "";
+	  e.preventDefault();
+	}
+
+  // ✅ bind (robust: move/up on window so resizing can't "die")
+  document.querySelectorAll(".resize-handle").forEach(h => {
+    h.addEventListener("pointerdown", onPointerDown, { passive: false });
+  });
+
+  // Move + up on window (works even if pointer capture fails)
+  window.addEventListener("pointermove", onPointerMove, { passive: false });
+  window.addEventListener("pointerup", onPointerUp, { passive: false });
+  window.addEventListener("pointercancel", onPointerUp, { passive: false });
+
+
+
+
+	async function loadMachineId() {
+	  try {
+		const res = await ipcRenderer.invoke("app:getMachineId");
+		const id = res?.machineId || "";
+
+		setMachineIdUI(id); // sets MACHINE_ID internally
+
+	  } catch (e) {
+		console.error("license init failed", e);
+	  }
+	}
+
+
+
+	
+	ipcRenderer.on("ui:setOpacity", (e, { value }) => {
+	  const v = Math.max(0.15, Math.min(1.0, Number(value || 1)));
+
+	  // ✅ sync slider UI to actual value
+	  const slider = document.getElementById("opacity-slider");
+	  if (slider) slider.value = String(v);
+
+	  // ✅ apply CSS vars
+	  document.documentElement.style.setProperty("--glass-opacity", String(v));
+	  const tint = Math.max(0.08, v * 0.35);
+	  document.documentElement.style.setProperty("--tint-alpha", String(tint));
+	});
+
+	
+	function bindTitlebarDblClick() {
+	  const bar = document.querySelector(".titlebar");
+	  const drag = document.querySelector(".titlebar-drag");
+
+	  const handler = (e) => {
+		if (e.target.closest("button, input, select, label, a")) return;
+		ipcRenderer.send("window:toggleMaximize");
+	  };
+
+	  bar?.addEventListener("dblclick", handler);
+	  drag?.addEventListener("dblclick", handler);
+	}
+
+    // Window buttons
+    document.getElementById('min-btn').addEventListener('click', () => ipcRenderer.send('window:minimize'));
+    document.getElementById('close-btn').addEventListener('click', () => ipcRenderer.send('window:close'));
+	document.getElementById('max-btn').addEventListener('click', () => ipcRenderer.send('window:toggleMaximize'));
+
+	ipcRenderer.on("window:isMaximized", (e, { value }) => {
+	  const b = document.getElementById("max-btn");
+	  if (!b) return;
+	  b.textContent = value ? "❐" : "▢";   // restore vs maximize
+	  b.title = value ? "Restore" : "Maximize";
+	});
+
+	
+    // Opacity slider
+	const opacitySlider = document.getElementById('opacity-slider');
+
+	// smooth live update
+	opacitySlider.addEventListener('input', (e) => {
+	  ipcRenderer.send('set-opacity', e.target.value);
+	});
+
+	// ensures final exact value is saved
+	opacitySlider.addEventListener('change', (e) => {
+	  ipcRenderer.send('set-opacity', e.target.value);
+	});
+
+	
+	const ctxPane = document.getElementById('ctx-pane');
+	const aiPane  = document.getElementById('ai-pane');
+
+
+    const finalText = document.getElementById('final-text');
+
+	const partialText = document.getElementById('partial-text');
+	const partialWrap = document.getElementById('partial-wrap');
+	
+		// ✅ Click grey partial to "select" it for Ask
+	partialWrap.addEventListener("click", () => {
+	  if (editingIndex !== -1) return;
+
+	  selectedIndex = -1;
+	  renderTranscripts();
+
+	  partialWrap.classList.add("selected");
+	  setStatus("Partial selected — press Ask", readyLatched ? "ready" : "info");
+	});
+
+
+
+    const outputBox = document.getElementById('output');
+    const aiBrain = document.getElementById('ai-brain');
+	
+	let clickTimer = null;
+	const CLICK_DELAY = 220; // ms
+
+	const clearBtn = document.getElementById('clear-btn');
+
+	
+	const ctxToggle = document.getElementById('ctx-toggle');
+	let ctxEnabled = true;
+
+	
+	const aiAnswer = document.getElementById('ai-answer');
+	const aiToggle = document.getElementById('ai-toggle');
+	let aiEnabled = true;
+	
+	function setMachineIdUI(id) {
+	  const el = document.getElementById("machine-id-pill");
+	  if (!el) return;
+
+	  const mid = String(id || "").trim();
+	  el.textContent = mid ? mid : "—";
+	  el.title = mid || "Machine ID";
+	}
+
+
+    const statusText = document.getElementById('status-text');
+    const statusLight = document.getElementById('status-light');
+
+    const captureBtn = document.getElementById('capture-btn');
+    const reloadBtn = document.getElementById('reload-btn');
+    const resourcesBtn = document.getElementById('resources-btn');
+
+    const editBtn = document.getElementById('edit-btn');
+    const askBtn = document.getElementById('ask-btn');
+    const saveBtn = document.getElementById('save-btn');
+    const loadBtn = document.getElementById('load-btn');
+
+    const deviceSelect = document.getElementById('device-select');
+
+    let isCapturing = false;
+    let searchTimeout = null;
+    let textBuffer = "";
+
+    let transcriptLines = [];
+    let selectedIndex = -1;
+
+    let lastStartAt = 0;
+    let readyLatched = false;
+
+    // inline edit state
+    let editingIndex = -1;
+	let editingEl = null;
+	let outsideCancelHandler = null;
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+	// IMPORTANT: for Option A, do NOT auto-load script_tree.json from disk here.
+	// The user must open/create a script file first.
+
+
+    function setStatus(text, mode = "info") {
+      statusText.innerText = text || "";
+
+      if (mode === "ready") statusLight.style.background = "#00ff00";
+      else if (mode === "search") statusLight.style.background = "#2aa8ff";
+      else if (mode === "listen") statusLight.style.background = "#00c2ff";
+      else if (mode === "warn") statusLight.style.background = "#ffd000";
+      else statusLight.style.background = "#ff4444";
+    }
+	
+	function showCtxWaitingMessage() {
+	  aiBrain.innerHTML = `<div class="ai-placeholder">Waiting for Context...</div>`;
+	  aiBrain.scrollTop = 0;
+	}
+
+  function showScriptLoadMessage() {
+    aiBrain.innerHTML = `
+      <div class="ai-placeholder">
+        <div>
+          <div style="font-weight:800; font-size:14px; color: rgba(255,255,255,0.85);">
+            No script loaded
+          </div>
+          <div style="margin-top:6px;">
+            Click <b>Open</b> or <b>New</b> to load a script.
+          </div>
+        </div>
+      </div>
+    `;
+    aiBrain.scrollTop = 0;
+  }
+
+
+	function showAiWaitingMessage() {
+	  aiAnswer.innerHTML = `<div class="ai-placeholder">Waiting for AI...</div>`;
+	  aiAnswer.scrollTop = 0;
+	}
+
+	
+	
+	function formatContextText(rawText) {
+	  if (!rawText) return "";
+
+	  // normalize newlines
+	  let t = String(rawText).replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
+
+	  // escape HTML
+	  t = escapeHtml(t);
+
+	  // keep line breaks exactly (best for excerpts)
+	  return `<pre class="ctx-pre">${t}</pre>`;
+	}
+
+	function formatAIResponse(rawText) {
+	  if (!rawText) return "";
+	  let t = String(rawText).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
+	  // escape first
+	  t = escapeHtml(t);
+
+	  // Convert double newlines into paragraph breaks
+	  const blocks = t.split(/\n{2,}/).map(b => b.trim()).filter(Boolean);
+
+	  return blocks.map(block => {
+		// If it looks like a list or code-ish, keep as <pre>
+		if (/^(\d+\.|\-|\*|•)/m.test(block) || block.includes("```")) {
+		  return `<pre class="match-pre">${block}</pre>`;
+		}
+		return `<p class="match-par">${block.replace(/\n/g, "<br>")}</p>`;
+	  }).join("");
+	}
+
+
+    function getLineIndexFromSelectionOrClick() {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        let node = range.commonAncestorContainer || sel.anchorNode;
+        if (node && node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+        if (node && node.closest) {
+          const item = node.closest('.history-item');
+          if (item) {
+            const idx = parseInt(item.dataset.idx, 10);
+            if (!Number.isNaN(idx)) return idx;
+          }
+        }
+      }
+      if (selectedIndex >= 0) return selectedIndex;
+      return -1;
+    }
+
+    function scrollToBottom() {
+      outputBox.scrollTop = outputBox.scrollHeight;
+    }
+
+	function renderTranscripts() {
+	  finalText.innerHTML = "";
+
+	  transcriptLines.forEach((txt, idx) => {
+		const div = document.createElement("div");
+		div.className = "history-item" + (idx === selectedIndex ? " selected" : "");
+		div.dataset.idx = String(idx);
+		div.innerText = txt;
+		finalText.appendChild(div);
+	  });
+
+	  scrollToBottom();
+	}
+
+	// Single click selects (DELAYED so dblclick can win)
+	finalText.addEventListener("click", (e) => {
+	  if (editingIndex !== -1) return;
+
+	  const item = e.target.closest(".history-item");
+	  if (!item) return;
+
+	  const idx = parseInt(item.dataset.idx, 10);
+	  if (Number.isNaN(idx)) return;
+
+	  // delay selection, in case it's actually a dblclick
+	  clearTimeout(clickTimer);
+	  clickTimer = setTimeout(() => {
+		selectedIndex = idx;
+		renderTranscripts();
+	  }, CLICK_DELAY);
+	});
+
+	// Double click = edit (CANCEL pending click)
+	finalText.addEventListener("dblclick", (e) => {
+	  const item = e.target.closest(".history-item");
+	  if (!item) return;
+
+	  const idx = parseInt(item.dataset.idx, 10);
+	  if (Number.isNaN(idx)) return;
+
+	  clearTimeout(clickTimer); // ✅ stop single-click action
+
+	  if (editingIndex !== -1 && editingIndex !== idx) cancelInlineEdit();
+
+	  selectedIndex = idx;
+	  editingIndex = idx;
+
+	  // DO NOT re-render here
+	  startInlineEditOnElement(item, false);
+
+	  setStatus("Editing… (Enter = save, click outside = cancel)", readyLatched ? "ready" : "info");
+	});
+
+
+
+
+
+
+	function replaySearch(text) {
+
+	  setStatus("Searching…", "search");
+	  aiBrain.innerHTML = `<div style="color:#2aa8ff;padding:10px;font-weight:bold;">Searching...</div>`;
+	  ipcRenderer.send('python-cmd', { cmd: 'query_knowledge', question: text, ai: aiEnabled });
+	}
+
+	function toggleCapture() {
+	
+	  if (appMode === "script") {
+	    scriptNodeId = "start";
+	  }
+
+	  const deviceId = deviceSelect.value;
+
+	  if (!isCapturing) {
+	  
+	  
+		if (appMode === "script") {
+		  scriptStart();
+		  setStatus("Script mode ready (press Start)", "ready");
+		  }
+	  
+		lastStartAt = Date.now();
+		ipcRenderer.send('python-cmd', { cmd: 'start', device_id: deviceId });
+		captureBtn.innerText = "Stop";
+		captureBtn.className = "btn-stop";
+		isCapturing = true;
+		setStatus("Listening…", "listen");
+	  } else {
+		ipcRenderer.send('python-cmd', { cmd: 'stop' });
+		captureBtn.innerText = "Start";
+		captureBtn.className = "btn-start";
+		isCapturing = false;
+		setStatus("Stopping…", readyLatched ? "ready" : "warn");
+	  }
+	}
+
+
+
+    async function chooseResources() {
+      aiBrain.innerHTML = `<div style="color:#2aa8ff;padding:10px;font-weight:bold;">Choose a resources folder...</div>`;
+      try {
+        const result = await ipcRenderer.invoke('choose-resources-folder');
+        if (!result || result.ok !== true) {
+          aiBrain.innerHTML = `<div style="color:#666;padding:10px;">Folder selection cancelled.</div>`;
+          return;
+        }
+        readyLatched = false;
+        setStatus("Indexing resources…", "search");
+		
+		
+      } catch (e) {
+        setStatus("Error choosing folder", "error");
+        aiBrain.innerHTML = `<div style="color:#ff6666;padding:10px;">${escapeHtml(e.message || String(e))}</div>`;
+      }
+    }
+
+    function indexKnowledge() {
+      readyLatched = false;
+      setStatus("Indexing resources…", "search");
+      ipcRenderer.send('python-cmd', { cmd: 'index_knowledge' });
+    }
+
+    // ----------------------------
+    // ✅ INLINE EDIT (NO PROMPT)
+    // ----------------------------
+    function startInlineEdit() {
+      const idx = selectedIndex;
+      if (idx < 0 || idx >= transcriptLines.length) {
+        setStatus("Highlight/click a transcript line first", readyLatched ? "ready" : "warn");
+        return;
+      }
+
+      if (editingIndex !== -1 && editingIndex !== idx) cancelInlineEdit();
+
+      selectedIndex = idx;
+      editingIndex = idx;
+      renderTranscripts();
+
+      const el = finalText.querySelector(`.history-item[data-idx="${idx}"]`);
+      if (!el) {
+        setStatus("Edit failed: item not found", "error");
+        editingIndex = -1;
+        return;
+      }
+
+      startInlineEditOnElement(el, true);
+      setStatus("Editing… (Enter = save, Esc = cancel)", readyLatched ? "ready" : "info");
+    }
+
+	function startInlineEditOnElement(el, selectAll = false) {
+	  // If already editing something else, cancel it first
+	  if (editingEl && editingEl !== el) cancelInlineEdit();
+
+	  editingEl = el;
+
+	  el.contentEditable = "true";
+	  el.spellcheck = false;
+
+	  el.style.outline = "2px solid rgba(0,120,212,0.55)";
+	  el.style.background = "rgba(0,120,212,0.15)";
+	  el.style.cursor = "text";
+	  el.style.userSelect = "text";
+
+	  // prevent stacking handlers
+	  el.removeEventListener("keydown", onEditKeyDown);
+	  el.addEventListener("keydown", onEditKeyDown);
+
+	  // ✅ allow caret editing by click
+	  el.focus({ preventScroll: true });
+
+	  // select all ONLY when requested (Edit button)
+	  if (selectAll) {
+		const range = document.createRange();
+		range.selectNodeContents(el);
+		const sel = window.getSelection();
+		sel.removeAllRanges();
+		sel.addRange(range);
+	  }
+
+	  // ✅ clicking outside cancels
+	  attachOutsideCancel(el);
+	}
+
+
+	function detachOutsideCancel() {
+	  if (outsideCancelHandler) {
+		document.removeEventListener("pointerup", outsideCancelHandler, true);
+		outsideCancelHandler = null;
+	  }
+	}
+
+	function attachOutsideCancel(el) {
+	  detachOutsideCancel();
+
+	  outsideCancelHandler = (e) => {
+		if (el && el.contains(e.target)) return; // click inside = keep editing
+		cancelInlineEdit();
+	  };
+
+	  // ✅ use pointerup so it won't cancel the same dblclick/pointerdown
+	  document.addEventListener("pointerup", outsideCancelHandler, true);
+	}
+
+
+    function onEditKeyDown(e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        commitInlineEdit();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        cancelInlineEdit();
+      }
+    }
+
+	function commitInlineEdit() {
+	  if (editingIndex < 0 || !editingEl) return;
+
+	  const edited = String(editingEl.innerText || "").trim();
+	  if (!edited) {
+		cancelInlineEdit();
+		return;
+	  }
+
+	  transcriptLines[editingIndex] = edited; // ✅ overwrite same line
+	  selectedIndex = editingIndex;
+
+	  cleanupEditElement(editingEl);
+	  editingIndex = -1;
+
+	  renderTranscripts();
+	  replaySearch(edited);
+	  setStatus("Updated line", readyLatched ? "ready" : "info");
+	}
+
+
+	function cleanupEditElement(el) {
+	  try { el.removeEventListener("keydown", onEditKeyDown); } catch {}
+	  el.contentEditable = "false";
+	  el.style.outline = "";
+	  el.style.background = "";
+	  el.style.cursor = "";
+	  el.style.userSelect = "";
+
+	  editingEl = null;
+	  detachOutsideCancel();
+	}
+
+	function cancelInlineEdit() {
+	  if (editingIndex < 0 || !editingEl) return;
+
+	  // restore original text
+	  editingEl.innerText = transcriptLines[editingIndex] || "";
+
+	  cleanupEditElement(editingEl);
+	  editingIndex = -1;
+
+	  renderTranscripts();
+	  setStatus("Edit cancelled", readyLatched ? "ready" : "info");
+	}
+
+
+
+	function askSelected() {
+	  // 1) selected final transcript line
+	  if (selectedIndex >= 0 && selectedIndex < transcriptLines.length) {
+		if (editingIndex !== -1) cancelInlineEdit();
+		renderTranscripts();
+		replaySearch(transcriptLines[selectedIndex]);
+		return;
+	  }
+
+	  // 2) otherwise use partial (grey)
+	  const p = String(partialText.innerText || "").trim();
+	  if (!p) {
+		setStatus("Click a transcript line (or the grey partial) first", readyLatched ? "ready" : "warn");
+		return;
+	  }
+
+	  replaySearch(p);
+	}
+
+
+    async function saveTranscripts() {
+      const content = transcriptLines.join("\n");
+      const result = await ipcRenderer.invoke('transcripts:save', content);
+      if (result?.ok) setStatus("Saved transcripts", "ready");
+      else if (result?.error) setStatus(result.error, "error");
+    }
+
+    async function loadTranscripts() {
+      const result = await ipcRenderer.invoke('transcripts:load');
+      if (!result?.ok) return;
+
+      transcriptLines = String(result.text || "")
+        .split(/\r?\n/)
+        .map(x => x.trim())
+        .filter(Boolean);
+
+      selectedIndex = transcriptLines.length ? 0 : -1;
+      editingIndex = -1;
+      renderTranscripts();
+      setStatus("Loaded transcripts", readyLatched ? "ready" : "info");
+    }
+
+    ipcRenderer.on('from-python', (event, data) => {
+      if (!data || !data.type) return;	  
+
+
+	  if (data.type === "ui_capture_stopped") {
+	    // force UI back to stopped state
+	    isCapturing = false;
+	    captureBtn.innerText = "Start";
+	    captureBtn.className = "btn-start";
+	    partialText.innerText = "";
+	    setStatus("Idle.", "warn");
+	  }
+
+
+      if (data.type === 'status') {
+        const t = String(data.text || "");
+
+        if (isCapturing && /^idle\./i.test(t) && (Date.now() - lastStartAt) < 1500) return;
+
+        let mode = "info";
+        if (/indexing/i.test(t)) mode = "search";
+
+        // ✅ FIX: treat BOTH of these as "indexing done"
+        else if (/index complete|local knowledge indexed/i.test(t)) mode = "ready";
+
+        else if (/indexed|engine ready/i.test(t)) mode = "ready";
+        else if (/searching/i.test(t)) mode = "search";
+        else if (/search complete/i.test(t)) mode = "search";
+        else if (/listening/i.test(t)) mode = "listen";
+
+        // ✅ FIX: Idle should be amber
+        else if (/^idle\./i.test(t)) mode = "warn";
+
+        else if (/stopping/i.test(t)) mode = "warn";
+        else if (/stopped/i.test(t)) mode = "info";
+        else if (/error/i.test(t)) mode = "error";
+
+        // ✅ FIX: DO NOT force warn -> ready (this was making Idle green)
+        if (readyLatched && mode === "info") mode = "ready";
+
+        setStatus(t, mode);
+
+        // ✅ FIX: latch ready on index completion too
+        if (mode === "ready") readyLatched = true;
+      }
+
+      if (data.type === 'device_list') {
+        deviceSelect.innerHTML =
+          (data.devices || []).map(d => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join('');
+      }
+
+      if (data.type === 'partial') {
+        partialText.innerText = " " + (data.text || "");
+        scrollToBottom();
+      }
+
+      if (data.type === 'transcript') {
+
+        partialText.innerText = "";
+        const txt = String(data.text || "").trim();
+        if (!txt) return;
+		
+		scriptOnTranscript(txt);
+
+
+        transcriptLines.push(txt);
+
+        // cap history BEFORE computing selected index
+        const MAX_LINES = 300;
+        if (transcriptLines.length > MAX_LINES) {
+          transcriptLines.splice(0, transcriptLines.length - MAX_LINES);
+        }
+
+        // always select the newest line safely
+        selectedIndex = transcriptLines.length - 1;
+
+        renderTranscripts();
+
+
+		if (appMode !== "script") {
+		  textBuffer += " " + txt;
+		  clearTimeout(searchTimeout);
+		  searchTimeout = setTimeout(() => {
+			if (!ctxEnabled) {
+			  textBuffer = "";
+			  return;
+			}
+
+			if (textBuffer.trim().length > 10) {
+			  setStatus("Searching…", "search");
+			  ipcRenderer.send('python-cmd', { cmd: 'query_knowledge', question: textBuffer, ai: aiEnabled });
+			  textBuffer = "";
+			}
+		  }, 1500);
+		}
+      }
+
+	  if (data.type === 'knowledge_context') {
+	  
+		if (appMode === "script") return;
+
+	    const txt = String(data.text || "");
+
+	    if (!txt || txt.includes("not indexed")) {
+		  aiBrain.innerHTML =
+		    `<div style="color: rgba(255,255,255,0.6); padding: 10px;">${escapeHtml(txt)}</div>`;
+	    } else {
+		  // Optional: split by --- if you still want sections
+		  const sections = txt.split('---').map(s => s.trim()).filter(Boolean);
+
+		  aiBrain.innerHTML = sections.map(s =>
+		    `<div class="match-box">${formatContextText(s)}</div>`
+		  ).join('');
+	    }
+
+	    aiBrain.scrollTop = 0;
+	  }
+
+	  
+	 if (data.type === 'ai_result') {
+	   if (!aiEnabled) return; // ✅ ignore AI output when OFF
+
+	   const txt = String(data.text || "").trim();
+
+	   if (!txt) {
+		 aiAnswer.innerHTML = `<div style="color: rgba(255,255,255,0.6); padding: 10px;">No AI response.</div>`;
+	   } else {
+		 aiAnswer.innerHTML = `<div class="match-box">${formatAIResponse(txt)}</div>`;
+	   }
+
+	    aiAnswer.scrollTop = 0;
+	  }
+
+		
+	  if (data.type === 'ai_error') {
+		  const msg = String(data.message || "AI Error");
+	      aiAnswer.innerHTML = `<div style="color:#ff6666;padding:10px;">${escapeHtml(msg)}</div>`;
+	      aiAnswer.scrollTop = 0;
+	}
+
+
+
+		if (data.type === 'error') {
+		  const msg = String(data.message || "Error");
+
+		  // ✅ AI errors go to AI Answer box ONLY
+		  if (msg.includes("AI generation failed")) {
+			aiAnswer.innerHTML = `<div style="color:#ff6666;padding:10px;">${escapeHtml(msg)}</div>`;
+			aiAnswer.scrollTop = 0;
+			return;
+		  }
+
+		  // existing filters
+		  if (msg.includes("Errno -9999") || msg.toLowerCase().includes("unanticipated host error")) return;
+
+		  readyLatched = false;
+		  setStatus(msg, "error");
+
+		  // real engine errors still go to Primary Resource Context
+		  aiBrain.innerHTML = `<div style="color:#ff6666;padding:10px;">${escapeHtml(msg)}</div>`;
+		}
+
+    });
+
+    async function loadIcon() {
+      const res = await ipcRenderer.invoke('assets:getUrl', 'intass.png');
+      if (res?.ok) document.getElementById('appIcon').src = res.url;
+    }
+	
+	function showCtxOffMessage() {
+	  aiBrain.innerHTML = `
+		<div class="ai-off-text">
+		  Primary Context is OFF
+		</div>
+	  `;
+	  aiBrain.scrollTop = 0;
+	}
+
+	
+	function showAiOffMessage() {
+	  aiAnswer.innerHTML = `
+		<div class="ai-off-text">
+		  AI Answer is OFF
+		</div>
+	  `;
+	  aiAnswer.scrollTop = 0;
+	}
+
+
+function wireButtons() {
+
+  const scriptOpenBtn   = document.getElementById("script-open-btn");
+  const scriptNewBtn    = document.getElementById("script-new-btn");
+  const scriptEditorBtn = document.getElementById("script-editor-btn");
+
+  const modeBtn         = document.getElementById("mode-btn");
+
+  const privacyToggle = document.getElementById("privacy-toggle");
+  privacyToggle?.addEventListener("change", () => {
+    ipcRenderer.send("privacy:set", { enabled: !!privacyToggle.checked });
+    setStatus(
+      privacyToggle.checked ? "Privacy ON (screenshots blocked)" : "Privacy OFF (screenshots allowed)",
+      readyLatched ? "ready" : "info"
+    );
+  });
+
+
+  
+
+  // Script: Open (top button + script toolbar)
+  async function doOpenScript() {
+    const r = await ipcRenderer.invoke("script:open");
+    if (!r?.ok) {
+      setStatus(r?.error || "Open cancelled", "warn");
+      return;
+    }
+    currentScriptPath = r.path;
+    scriptReadOnly = !!r.readOnly;
+    scriptLocked = true;
+
+    scriptTree = r.script; // { meta, nodes }
+    scriptNodeId = "start";
+    editorNodeId = "start";
+
+    // stat for mtime + read-only (shared drives)
+    const st = await ipcRenderer.invoke("script:stat", { path: currentScriptPath });
+    currentScriptMtimeMs = st?.ok ? (st.mtimeMs || 0) : 0;
+    scriptReadOnly = st?.ok ? !!st.readOnly : scriptReadOnly;
+
+    refreshScriptHeader();
+    renderScript();
+    setStatus(scriptReadOnly ? "Script opened (READ-ONLY)" : "Script opened (LOCKED)", scriptReadOnly ? "warn" : "ready");
+  }
+
+  document.getElementById("script-open2-btn")?.addEventListener("click", doOpenScript);
+
+  // Script: New (wizard)
+
+  document.getElementById("script-new2-btn")?.addEventListener("click", async () => {
+    const pick = await ipcRenderer.invoke("script:newSaveDialog");
+    if (!pick?.ok) {
+      setStatus(pick?.error || "Create cancelled", "warn");
+      return;
+    }
+
+    // ✅ straight to PIN step
+    openScriptWizardAtPin({ mode: "new", targetPath: pick.path });
+  });
+
+
+
+  // Script: Duplicate (wizard)
+  document.getElementById("script-dup-btn")?.addEventListener("click", () => {
+    if (!currentScriptPath || !scriptTree) {
+      setStatus("No script loaded to duplicate.", "warn");
+      return;
+    }
+    openScriptWizard({ mode: "duplicate" });
+  });
+
+  // Script: Unlock/Edit (PIN)
+  async function doUnlock() {
+    if (appMode !== "script") return;
+    if (!currentScriptPath) {
+      setStatus("No script loaded. Click Open or New.", "warn");
+      return;
+    }
+    // refresh read-only state (shared drives can change)
+    const st = await ipcRenderer.invoke("script:stat", { path: currentScriptPath });
+    if (st?.ok) {
+      scriptReadOnly = !!st.readOnly;
+      if (!st.exists) {
+        setStatus("Script file not found. Please Open or New.", "error");
+        currentScriptPath = "";
+        scriptTree = null;
+        refreshScriptHeader();
+        return;
+      }
+    }
+    if (scriptReadOnly) {
+      refreshScriptHeader();
+      setStatus("You don’t have write access to this file location.", "warn");
+      return;
+    }
+    openUnlockModal();
+  }
+
+  document.getElementById("script-unlock-btn")?.addEventListener("click", doUnlock);
+
+  // Script: Lock (UI-only)
+  document.getElementById("script-lock-btn")?.addEventListener("click", () => {
+    scriptLocked = true;
+    scriptEditorOpen = false;
+    closeScriptEditor();
+    refreshScriptHeader();
+    setStatus("Editor locked", "ready");
+  });
+
+// remember support-mode toggle state before entering script mode
+let supportState = { aiEnabled: true, ctxEnabled: true };
+
+modeBtn?.addEventListener("click", () => {
+  const goingToScript = (appMode === "support");
+  appMode = goingToScript ? "script" : "support";
+
+  const isScript = (appMode === "script");
+  modeBtn.textContent = isScript ? "Mode: Script" : "Mode: Support";
+
+  // body class drives a bunch of script-only CSS
+  if (isScript) document.body.classList.add("mode-script");
+  else document.body.classList.remove("mode-script");
+
+  if (isScript) {
+    // ✅ save current support-mode toggle states
+    supportState = { aiEnabled, ctxEnabled };
+
+    // Script mode rules
+    aiEnabled = false;
+    aiToggle.checked = false;
+    aiPane.classList.add("is-off");
+    showAiOffMessage();
+
+    ctxEnabled = true;
+    ctxToggle.checked = true;
+    ctxPane.classList.remove("is-off");
+
+    if (ensureScriptLoaded()) renderScript();
+    else showScriptLoadMessage();
+
+    refreshScriptHeader();
+    setStatus("Script mode ready (press Start)", "ready");
+    return;
+  }
+
+  // ==========================
+  // ✅ BACK TO SUPPORT MODE
+  // ==========================
+  // restore toggles the user had before script mode
+  ctxEnabled = !!supportState.ctxEnabled;
+  ctxToggle.checked = ctxEnabled;
+
+  aiEnabled = !!supportState.aiEnabled;
+  aiToggle.checked = aiEnabled;
+
+  // repaint panes so Script placeholders never leak into Support
+  if (!ctxEnabled) {
+    ctxPane.classList.add("is-off");
+    showCtxOffMessage();
+  } else {
+    ctxPane.classList.remove("is-off");
+    showCtxWaitingMessage();   // ✅ this fixes "No script loaded" sticking around
+  }
+
+  if (!aiEnabled) {
+    aiPane.classList.add("is-off");
+    showAiOffMessage();
+  } else {
+    aiPane.classList.remove("is-off");
+    showAiWaitingMessage();
+  }
+
+  refreshScriptHeader();
+  setStatus("Support mode", "ready");
+});
+
+
+
+  // Existing buttons
+  captureBtn.addEventListener("click", toggleCapture);
+  reloadBtn.addEventListener("click", indexKnowledge);
+  resourcesBtn.addEventListener("click", chooseResources);
+
+  editBtn.addEventListener("click", startInlineEdit);
+  askBtn.addEventListener("click", askSelected);
+  saveBtn.addEventListener("click", saveTranscripts);
+  loadBtn.addEventListener("click", loadTranscripts);
+
+  const rescanBtn = document.getElementById("rescan-btn");
+  rescanBtn?.addEventListener("click", () => {
+    setStatus("Rescanning devices…", "search");
+    ipcRenderer.send("python-cmd", { cmd: "get_devices" });
+  });
+  
+
+  aiToggle.addEventListener("change", () => {
+    aiEnabled = aiToggle.checked;
+    if (!aiEnabled) aiPane.classList.add("is-off");
+    else {
+      aiPane.classList.remove("is-off");
+      showAiWaitingMessage();
+    }
+  });
+
+  ctxToggle.addEventListener("change", () => {
+    ctxEnabled = ctxToggle.checked;
+    if (!ctxEnabled) ctxPane.classList.add("is-off");
+    else {
+      ctxPane.classList.remove("is-off");
+      showCtxWaitingMessage();
+    }
+  });
+
+  clearBtn.addEventListener("click", () => {
+    if (editingIndex !== -1) cancelInlineEdit();
+
+    transcriptLines = [];
+    selectedIndex = -1;
+    editingIndex = -1;
+    partialText.innerText = "";
+    textBuffer = "";
+
+    if (partialWrap) partialWrap.classList.remove("selected");
+
+    renderTranscripts();
+    setStatus("History cleared", readyLatched ? "ready" : "info");
+  });
+
+  // ---------- Wizard + Unlock modal wiring ----------
+  modal.btnCancel()?.addEventListener("click", hideModal);
+
+  modal.btnBack()?.addEventListener("click", () => {
+    if (wizardState.step === 3) {
+      wizardState.step = 2;
+      showStep("s2");
+      modal.btnBack().style.display = "none";
+      modal.btnNext().style.display = "inline-flex";
+      modal.btnCreate().style.display = "none";
+    }
+  });
+
+  modal.name()?.addEventListener("input", () => {
+    const base = safeFileBase(modal.name().value);
+    wizardState.fileBase = base;
+    if (modal.filePrev()) modal.filePrev().textContent = `${base}.json`;
+  });
+
+    modal.btnCreate()?.addEventListener("click", async () => {
+      const pin1 = String(modal.pin().value || "").trim();
+      const pin2 = String(modal.pin2().value || "").trim();
+      if (!/^\d{4}$/.test(pin1)) { setStatus("PIN must be exactly 4 digits.", "warn"); return; }
+      if (pin1 !== pin2) { setStatus("PINs do not match.", "warn"); return; }
+
+      const pathMod = require("path");
+      const inferredName = pathMod.basename(wizardState.targetPath, pathMod.extname(wizardState.targetPath));
+
+      const payload = {
+        path: wizardState.targetPath,
+        name: inferredName, // ✅ name comes from filename user chose in Save dialog
+        pin: pin1,
+        hint: String(modal.hint().value || "").trim(),
+      };
+
+
+      const res = (wizardState.mode === "duplicate")
+        ? await ipcRenderer.invoke("script:duplicate", { ...payload, srcPath: currentScriptPath })
+        : await ipcRenderer.invoke("script:newWizard", payload);
+
+      if (!res?.ok) {
+        setStatus(res?.error || "Create failed", "error");
+        return;
+      }
+
+      currentScriptPath = res.path;
+      scriptReadOnly = !!res.readOnly;
+      scriptLocked = true;
+
+      scriptTree = res.script;
+      scriptNodeId = "start";
+      editorNodeId = "start";
+
+      const st = await ipcRenderer.invoke("script:stat", { path: currentScriptPath });
+      currentScriptMtimeMs = st?.ok ? (st.mtimeMs || 0) : 0;
+
+      refreshScriptHeader();
+      renderScript();
+      hideModal();
+      setStatus(wizardState.mode === "duplicate" ? "Script duplicated (LOCKED)" : "New script created (LOCKED)", "ready");
+    });
+
+
+  modal.btnUnlock()?.addEventListener("click", async () => {
+    const pin = String(modal.unlockPin().value || "").trim();
+    if (!pin) return;
+
+    const v = await ipcRenderer.invoke("script:verifyPin", { path: currentScriptPath, pin });
+    if (!v?.ok || !v.okPin) {
+      if (modal.unlockErr()) modal.unlockErr().style.display = "block";
+      return;
+    }
+
+    scriptLocked = false;
+    hideModal();
+    refreshScriptHeader();
+    openScriptEditor();
+    setStatus("Editor unlocked", "ready");
+  });
+
+
+}
+
+
+window.onload = async () => {
+  await loadIcon();
+  wireButtons();
+  await loadMachineId();
+
+  // ✅ privacy init (ONLY ONCE)
+  const privacyToggle = document.getElementById("privacy-toggle");
+  try {
+    const cur = await ipcRenderer.invoke("privacy:get");
+    if (typeof cur?.enabled === "boolean") privacyToggle.checked = cur.enabled;
+    ipcRenderer.send("privacy:set", { enabled: !!privacyToggle.checked });
+  } catch (e) {
+    console.error("privacy sync failed", e);
+  }
+
+  // ✅ machine id click-to-copy (keep)
+  const machineIdPill = document.getElementById("machine-id-pill");
+  if (machineIdPill) {
+    machineIdPill.style.cursor = "pointer";
+    machineIdPill.title = "Click to copy Machine ID";
+    machineIdPill.addEventListener("click", async () => {
+      try {
+        const res = await ipcRenderer.invoke("app:getMachineId");
+        const id = res?.machineId || "";
+        if (!id) return;
+        const { clipboard } = require("electron");
+        clipboard.writeText(id);
+        setStatus("Machine ID copied", readyLatched ? "ready" : "info");
+      } catch {
+        setStatus("Copy failed", "warn");
+      }
+    });
+  }
+
+  // ✅ titlebar dblclick (keep)
+  const titlebar = document.querySelector(".titlebar");
+  if (titlebar) {
+    titlebar.addEventListener("dblclick", (e) => {
+      if (e.target.closest("button, input, select, label, a")) return;
+      ipcRenderer.send("window:toggleMaximize");
+    });
+  }
+
+  // ✅ toggles init (keep)
+  ctxEnabled = ctxToggle.checked;
+  if (!ctxEnabled) ctxPane.classList.add("is-off");
+  else { ctxPane.classList.remove("is-off"); showCtxWaitingMessage(); }
+
+  aiEnabled = aiToggle.checked;
+  if (!aiEnabled) aiPane.classList.add("is-off");
+  else { aiPane.classList.remove("is-off"); showAiWaitingMessage(); }
+
+  // ✅ spacebar start/stop (keep)
+  window.addEventListener("keydown", (e) => {
+    if (e.code !== "Space") return;
+    const ae = document.activeElement;
+    const isTyping =
+      ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.isContentEditable);
+    if (isTyping) return;
+    e.preventDefault();
+    toggleCapture();
+  }, { passive: false });
+
+  ipcRenderer.send("python-cmd", { cmd: "get_devices" });
+  setStatus("Starting…", "info");
+  // ✅ FIRST BOOT TUTORIAL NOTICE
+  try {
+    const seen = localStorage.getItem("intass_seen_tutorial_hint");
+    if (!seen) {
+      setTimeout(() => {
+        setStatus("Welcome! Click the tutorial icon in the title bar to begin (TOP LEFT ICON).", "info");
+      }, 900);
+
+      localStorage.setItem("intass_seen_tutorial_hint", "1");
+    }
+  } catch (e) {
+    console.error("First boot hint failed:", e);
+  }
+
+};
+  </script>  
+  <script src="./tutorial_tour.js"></script>
+</body>
+</html>
