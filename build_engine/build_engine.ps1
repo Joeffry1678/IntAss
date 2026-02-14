@@ -30,11 +30,9 @@ Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue
 # --- Resolve paths ---
 $ProjectRoot = (Resolve-Path .).Path
 $ModelDir    = Join-Path $ProjectRoot "models\model-en-us"
-$ResDir      = Join-Path $ProjectRoot "resources"
 
 Info "ProjectRoot: $ProjectRoot"
 Info "ModelDir   : $ModelDir"
-Info "ResDir     : $ResDir"
 
 # --- Find vosk package directory from current python ---
 Info "Locating Vosk package directory..."
@@ -44,7 +42,6 @@ Info "VoskPkgDir : $VoskPkgDir"
 
 # --- Sanity checks ---
 if (-not (Test-Path $ModelDir)) { Fail "Missing model dir: $ModelDir" }
-if (-not (Test-Path $ResDir))   { Fail "Missing resources dir: $ResDir" }
 if (-not (Test-Path $VoskPkgDir)) { Fail "Missing vosk pkg dir: $VoskPkgDir" }
 
 # --- Build with PyInstaller ---
@@ -57,7 +54,10 @@ python -m PyInstaller `
   --distpath build_engine\dist `
   --workpath build_engine\work `
   --specpath build_engine\spec `
-  --add-data "$ResDir;resources" `
+  --collect-all numpy `
+  --hidden-import numpy._core._exceptions `
+  --hidden-import numpy.core._multiarray_umath `
+  --hidden-import numpy.linalg._umath_linalg `
   src\engine.py
 
 # --- Stage Vosk binaries into output ---
