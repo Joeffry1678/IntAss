@@ -4,24 +4,22 @@
   "main": "src/main.js",
   "description": "IntAss AI Intelligent Assistant",
   "author": "pongapps",
-    "scripts": {
-      "start": "electron .",
-      "build_engine": "powershell -ExecutionPolicy Bypass -File build_engine\\build_engine.ps1",
-      "dist": "electron-builder"
+  "scripts": {
+    "start": "electron .",
+    "build_engine": "powershell -ExecutionPolicy Bypass -File build_engine\\build_engine.ps1",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.intass.app",
+    "productName": "IntAss",
+    "directories": {
+      "output": "dist"
     },
-
-    "build": {
-      "appId": "com.intass.app",
-      "productName": "IntAss",
-      "directories": {
-        "output": "dist"
-      },
-      "publish": [
-        {
-          "provider": "github"
-        }
-      ]
-    },
+    "publish": [
+      {
+        "provider": "github"
+      }
+    ],
     "files": [
       "src/**/*",
       "package.json"
