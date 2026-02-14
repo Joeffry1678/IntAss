@@ -36,6 +36,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r build_engine/requirements.txt
 
+      - name: Download Vosk model (en-us)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "models" | Out-Null
+          if (!(Test-Path "models/model-en-us")) {
+            Write-Host "Downloading Vosk model..."
+            Invoke-WebRequest -Uri "https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip" -OutFile "vosk-model.zip"
+            Expand-Archive -Path "vosk-model.zip" -DestinationPath "models" -Force
+            Remove-Item "vosk-model.zip" -Force
+            Rename-Item "models/vosk-model-small-en-us-0.15" "models/model-en-us"
+          }
+          if (!(Test-Path "models/model-en-us")) { throw "Vosk model folder not found after download." }
+          Get-ChildItem "models/model-en-us" | Select-Object -First 5
+
       - name: Build Python engine (PyInstaller)
         run: npm run build_engine
 
