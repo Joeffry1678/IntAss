@@ -386,7 +386,13 @@
       title: "Resources & Indexing",
       desc: "Load your local PDFs/DOCX/PPTX resources and re-index.",
       steps: [
-        { sel: "#resources-btn", title: "Resources Folder", body: "Pick a folder of PDFs/DOCX/PPTX. The engine will index it for search." },
+        { 
+          sel: "#resources-btn",
+          title: "Resources Folder",
+          body:
+            "Pick a folder of PDFs/DOCX/PPTX. The engine will index it for search.\n\n" +
+            "Proper Documentation Format: <a href='#' id='open-resources-guide' style='color:#6cb8ff;font-weight:700;'>Open Resources Guide</a>"
+        },
         { sel: "#reload-btn", title: "Reload", body: "Reload refreshes the renderer UI (handy after config changes)." },
         { sel: "#rescan-btn", title: "Rescan Audio", body: "If your mic disappears, rescan audio devices." },
       ]
@@ -798,7 +804,7 @@
       const wrap = el("div", {}, [
         el("div", { class: "kicker" }, [tourMeta?.title || "Tutorial"]),
         el("div", { class: "t" }, [step?.title || "Step"]),
-        el("div", { class: "b" }, [step?.body || ""]),
+        el("div", { class: "b", html: String(step?.body || "").replace(/\n/g, "<br>") }),
         el("div", { class: "tour-actions" }, [
           el("div", { class: "left" }, [
             el("span", { class: "tour-progress" }, [`${this.idx + 1} / ${total}`]),
@@ -813,6 +819,18 @@
           ])
         ])
       ]);
+
+    // Attach resources guide link handler (if present)
+    setTimeout(() => {
+      const guideLink = wrap.querySelector("#open-resources-guide");
+      if (guideLink) {
+        guideLink.addEventListener("click", (e) => {
+          e.preventDefault();
+          window.open("resources-guide.html", "_blank");
+        });
+      }
+    }, 0);
+
 
       return wrap;
     }

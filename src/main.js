@@ -313,7 +313,7 @@ function assetPath(fileName) {
 
 function getDefaultModelsDir() {
   return app.isPackaged
-    ? path.join(process.resourcesPath, "..", "vosk_model", "model-en-us")
+    ? path.join(process.resourcesPath, "engine", "models", "model-en-us")
     : path.join(__dirname, "..", "models", "model-en-us");
 }
 

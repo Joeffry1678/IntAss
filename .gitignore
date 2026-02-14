@@ -27,7 +27,10 @@ vosk_model/
 # ==============================
 recordings/
 resources/
-build_engine/
+build_engine/dist/
+build_engine/work/
+build_engine/spec/
+
 
 # ==============================
 # Binaries

@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Customer Support Resource Document Formatting Guide</title>
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --card:#111827;
+      --muted:#93a4b8;
+      --text:#e8eef7;
+      --accent:#60a5fa;
+      --ok:#34d399;
+      --bad:#fb7185;
+      --border:rgba(255,255,255,.10);
+      --shadow:0 12px 40px rgba(0,0,0,.45);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 20% 0%, rgba(96,165,250,.15), transparent 55%),
+                  radial-gradient(900px 700px at 80% 10%, rgba(52,211,153,.10), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+    header{
+      padding:40px 18px 18px;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+    header h1{
+      margin:0 0 10px;
+      font-size: clamp(26px, 3vw, 36px);
+      letter-spacing:.2px;
+    }
+    header p{
+      margin:0;
+      color:var(--muted);
+      max-width: 78ch;
+    }
+    .wrap{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), transparent 22%), var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px 18px;
+      margin: 14px 0;
+    }
+    h2{
+      margin: 0 0 10px;
+      font-size: 20px;
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border:1px solid var(--border);
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .tag b{color:var(--text); font-weight:600}
+    ul{margin:10px 0 0 18px}
+    li{margin: 6px 0}
+    .good{color:var(--ok); font-weight:600}
+    .bad{color:var(--bad); font-weight:600}
+    .example{
+      border:1px dashed rgba(255,255,255,.18);
+      border-radius: 14px;
+      padding: 12px;
+      margin: 10px 0 0;
+      background: rgba(0,0,0,.22);
+    }
+    .example .lbl{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom: 6px;
+    }
+    pre{
+      margin:0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 13px;
+      color: rgba(232,238,247,.95);
+    }
+    .callout{
+      border-left: 4px solid var(--accent);
+      padding: 10px 12px;
+      margin-top: 10px;
+      background: rgba(96,165,250,.08);
+      border-radius: 10px;
+      color: rgba(232,238,247,.92);
+    }
+    footer{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 26px 18px 40px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>📘 Customer Support Resource Document Formatting Guide</h1>
+    <p>
+      How to prepare documents so the AI can understand them correctly — rewritten for <b>Customer Support</b> interviews,
+      FAQs, and support playbooks. You don’t need technical knowledge. Just follow these rules so answers stay accurate.
+    </p>
+  </header>
+
+  <main class="wrap">
+
+    <section class="card">
+      <div class="tag">📂 <b>1</b> File Organization (Very Important)</div>
+      <h2>✅ Keep One Topic Per File</h2>
+      <p>
+        Don’t mix unrelated topics in one file. One file should cover one theme or skill area.
+      </p>
+
+      <div class="example">
+        <div class="lbl"><span class="bad">❌ BAD</span> (mixed topics)</div>
+        <pre>work history
+refund policy
+handling angry customers
+CRM navigation
+shipping delays
+product troubleshooting</pre>
+      </div>
+
+      <div class="example">
+        <div class="lbl"><span class="good">✅ GOOD</span> (one topic per file)</div>
+        <pre>Work History - Customer Support.docx
+Refunds & Returns Playbook.docx
+Handling Angry Customers.docx
+CRM Notes & Macros.docx
+Shipping Delay Response Templates.docx</pre>
+      </div>
+
+      <div class="callout">
+        <ul>
+          <li>The system chooses the best document first.</li>
+          <li>Mixing topics confuses matching and reduces accuracy.</li>
+          <li>Cleaner files = better answers.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="tag">🧠 <b>2</b> How to Structure Questions & Answers</div>
+      <h2>✅ Use a clear Q then A (with blank line)</h2>
+
+      <div class="example">
+        <div class="lbl"><span class="good">✅ Correct Format</span></div>
+        <pre>What’s your experience in customer support?
+
+I’ve worked in customer support for 3 years supporting email, chat, and phone.
+I handled billing questions, order issues, and account access problems.
+I used Zendesk and HubSpot to track tickets and follow SLAs.</pre>
+      </div>
+
+      <div class="example">
+        <div class="lbl"><span class="bad">❌ Do NOT format like this</span></div>
+        <pre>What’s your experience in customer support? I’ve worked in customer support for 3 years supporting email, chat, and phone...</pre>
+      </div>
+
+      <p><b>Rule:</b> Always leave a blank line between question and answer.</p>
+    </section>
+
+    <section class="card">
+      <div class="tag">🔢 <b>3</b> Numbered Sections (Highly Recommended)</div>
+      <h2>✅ Number interview Q&A blocks</h2>
+      <p>
+        When writing multiple interview questions in one file, use consistent numbering.
+      </p>
+
+      <div class="example">
+        <div class="lbl"><span class="good">✅ Example</span></div>
+        <pre>1. Why do you want to work in customer support?
+
+I enjoy solving customer problems and turning negative experiences into positive outcomes.
+I like working with clear processes and improving macros/knowledge base articles.
+
+2. How do you prioritize tickets?
+
+I triage by urgency and impact: account lockouts, payment failures, and time-sensitive shipping issues first.
+Then I handle standard requests while tracking SLAs and updating customers with ETAs.</pre>
+      </div>
+
+      <div class="callout">
+        <ul>
+          <li>The system detects numbered blocks.</li>
+          <li>It can return the single most relevant numbered answer.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="tag">🪜 <b>4</b> Step-by-Step Guides</div>
+      <h2>✅ Use “Step 1 / Step 2” for procedures</h2>
+
+      <div class="example">
+        <div class="lbl"><span class="good">✅ Example: Refund Process</span></div>
+        <pre>Step 1: Confirm the customer’s order number and verify purchase date.
+Step 2: Check eligibility (return window, condition, exceptions).
+Step 3: Offer the best resolution: replacement, store credit, or refund.
+Step 4: Process the refund in the billing tool and note the ticket.
+Step 5: Send confirmation with the expected refund timeline.</pre>
+      </div>
+
+      <div class="callout">
+        <ul>
+          <li>The system recognizes “Step 1 / Step 2”.</li>
+          <li>It returns the relevant steps instead of mixing content.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="tag">❓ <b>5</b> Question Blocks Rule</div>
+      <h2>✅ Keep each question block clean</h2>
+      <p>When using a question format:</p>
+      <ul>
+        <li>Question must have a <b>?</b></li>
+        <li>Leave a blank line after it</li>
+        <li>Don’t start another question immediately after</li>
+      </ul>
+
+      <div class="example">
+        <div class="lbl"><span class="good">✅ Correct</span></div>
+        <pre>How do you handle an angry customer?
+
+I start by listening without interrupting and acknowledging their frustration.
+I restate the issue to confirm I understand and apologize for the experience.
+Then I offer clear next steps and timelines, and follow through quickly.</pre>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="tag">🧩 <b>6</b> Paragraph Spacing (Very Important)</div>
+      <h2>✅ Separate ideas with blank lines</h2>
+
+      <div class="example">
+        <div class="lbl"><span class="good">✅ Good</span></div>
+        <pre>When customers are upset, empathy comes first.
+
+I acknowledge the impact on them and confirm what outcome they want.
+
+Then I offer the best available resolution and set expectations clearly.</pre>
+      </div>
+
+      <div class="example">
+        <div class="lbl"><span class="bad">❌ Bad</span></div>
+        <pre>When customers are upset, empathy comes first. I acknowledge the impact on them and confirm what outcome they want. Then I offer the best available resolution and set expectations clearly.</pre>
+      </div>
+
+      <p>Blank lines help the system understand context blocks.</p>
+    </section>
+
+    <section class="card">
+      <div class="tag">🚫 <b>7</b> Avoid These Mistakes</div>
+      <h2>❌ Don’t do these</h2>
+      <ul>
+        <li>Mix unrelated topics in one document</li>
+        <li>Put answers on the same line as the question</li>
+        <li>Use inconsistent numbering</li>
+        <li>Paste messy web content with broken formatting</li>
+        <li>Use too many emojis inside the document</li>
+        <li>Rely on scanned PDFs (harder to read)</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <div class="tag">📝 <b>8</b> Writing Style Tips</div>
+      <h2>✅ Write for clarity</h2>
+      <div class="callout">
+        <p style="margin:0 0 8px;"><b>Use:</b></p>
+        <ul>
+          <li>Clear sentences</li>
+          <li>Short paragraphs</li>
+          <li>Consistent headings</li>
+          <li>Structured lists and steps</li>
+        </ul>
+        <p style="margin:10px 0 8px;"><b>Avoid:</b></p>
+        <ul>
+          <li>Giant text walls</li>
+          <li>Random line breaks</li>
+          <li>Overlapping sections</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="tag">🗂 <b>9</b> Recommended File Types</div>
+      <h2>✅ Best formats</h2>
+      <ul>
+        <li><b>.docx</b> (recommended)</li>
+        <li><b>.txt</b></li>
+      </ul>
+      <h2 style="margin-top:14px;">⚠️ Avoid when possible</h2>
+      <ul>
+        <li>Scanned PDFs (harder to read)</li>
+        <li>Images / screenshots of text</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <div class="tag">🏆 <b>10</b> Best Practice Summary</div>
+      <h2>✔ Quick checklist</h2>
+      <ul>
+        <li>One topic per file</li>
+        <li>Use numbering for interview questions</li>
+        <li>Use “Step 1” format for procedures</li>
+        <li>Leave blank lines between sections</li>
+        <li>Keep formatting clean and consistent</li>
+        <li>Keep documents ~5–10 pages when possible</li>
+      </ul>
+
+      <div class="callout">
+        <b>Simple rule to remember:</b><br/>
+        If a human can easily scan and understand your document visually… the AI will understand it correctly.<br/>
+        If it looks messy to you… it will be messy for the AI too.
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    Source adapted from your “Resource Document Formatting Guide” PDF, rewritten for Customer Support content. :contentReference[oaicite:1]{index=1}
+  </footer>
+</body>
+</html>
