@@ -34,7 +34,7 @@
     "win": {
       "icon": "assets/intass.ico",
       "target": [
-        "zip"
+      "nsis", "zip"
       ]
     }
   },
