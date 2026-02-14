@@ -39,16 +39,40 @@ jobs:
       - name: Download Vosk model (en-us)
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path "models" | Out-Null
-          if (!(Test-Path "models/model-en-us")) {
+          $modelsDir = "models"
+          $targetDir = "models/model-en-us"
+          $zipPath = "vosk-model.zip"
+
+          New-Item -ItemType Directory -Force -Path $modelsDir | Out-Null
+
+          if (!(Test-Path $targetDir)) {
+
             Write-Host "Downloading Vosk model..."
-            Invoke-WebRequest -Uri "https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip" -OutFile "vosk-model.zip"
-            Expand-Archive -Path "vosk-model.zip" -DestinationPath "models" -Force
-            Remove-Item "vosk-model.zip" -Force
-            Rename-Item "models/vosk-model-small-en-us-0.15" "models/model-en-us"
+            Invoke-WebRequest `
+              -Uri "https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip" `
+              -OutFile $zipPath
+
+            Expand-Archive -Path $zipPath -DestinationPath $modelsDir -Force
+            Remove-Item $zipPath -Force
+
+            $extracted = Join-Path $modelsDir "vosk-model-small-en-us-0.15"
+
+            if (Test-Path $extracted) {
+              if (Test-Path $targetDir) {
+                Remove-Item -Recurse -Force $targetDir
+              }
+              Move-Item -Path $extracted -Destination $targetDir
+            } else {
+              throw "Extracted Vosk folder not found."
+            }
           }
-          if (!(Test-Path "models/model-en-us")) { throw "Vosk model folder not found after download." }
-          Get-ChildItem "models/model-en-us" | Select-Object -First 5
+
+          if (!(Test-Path $targetDir)) {
+            throw "Vosk model folder missing after setup."
+          }
+
+          Write-Host "Vosk model ready."
+
 
       - name: Build Python engine (PyInstaller)
         run: npm run build_engine
