@@ -50,7 +50,7 @@ python -m PyInstaller `
   --noconfirm `
   --clean `
   --onedir `
-  --no-archive `
+  -d noarchive `
   --name intass_engine `
   --distpath build_engine\dist `
   --workpath build_engine\work `
@@ -84,6 +84,8 @@ python -m PyInstaller `
   --copy-metadata google-genai `
   src\engine.py
 
+
+if ($LASTEXITCODE -ne 0) { Fail "PyInstaller failed (exit $LASTEXITCODE)" }
 
 # --- Stage Vosk binaries into output ---
 $EngineOutDir     = Join-Path $ProjectRoot "build_engine\dist\intass_engine"
