@@ -575,6 +575,27 @@
   ]
 },
 
+    ai_key: {
+      title: "AI Setup – Add API Key (.env)",
+      desc: "Where to paste your Gemini API key so AI works.",
+      steps: [
+        {
+          sel: null, // no highlight, centered card
+          title: "Add your Gemini API key",
+          body:
+            "To enable AI on this PC, paste your API key into the .env file located here:\n\n" +
+            "📁 Installed app location:\n" +
+            "resources/engine/.env\n\n" +
+            "Edit with notepad the .env file\n\n" +
+            "Replace the YOUR_KEY_HERE with your own API from google studio:\n" +
+            "GEMINI_API_KEY=YOUR_KEY_HERE\n\n" +
+            "Then restart IntAss."
+        }
+      ]
+    },
+
+
+
 
   };
 
