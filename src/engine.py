@@ -8,8 +8,7 @@ import numpy as np
 import pyaudiowpatch as pyaudio
 from vosk import Model, KaldiRecognizer
 from interview_brain import InterviewBrain
-import knowledge
-print("[DEBUG] knowledge.py loaded from:", knowledge.__file__, flush=True)
+
 from dotenv import load_dotenv
 from ai.provider_factory import create_ai_provider
 

@@ -1,6 +1,6 @@
 {
   "name": "intass",
-  "version": "1.1.10",
+  "version": "1.0.13",
   "main": "src/main.js",
   "description": "IntAss AI Intelligent Assistant",
   "author": "pongapps",
@@ -25,16 +25,28 @@
       "package.json"
     ],
     "extraResources": [
-      { "from": "assets", "to": "assets" },
-      { "from": "build_engine/dist/intass_engine", "to": "engine/intass_engine" },
-      { "from": "models/model-en-us", "to": "engine/models/model-en-us" },
-      { "from": "resources", "to": "engine/resources" },
-      { "from": ".env.example", "to": "engine/intass_engine/.env" }
+      {
+        "from": "assets",
+        "to": "assets"
+      },
+      {
+        "from": "build_engine/dist/intass_engine",
+        "to": "engine/intass_engine"
+      },
+      {
+        "from": "resources",
+        "to": "engine/resources"
+      },
+      {
+        "from": ".env",
+        "to": "engine/.env"
+      }
     ],
     "win": {
       "icon": "assets/intass.ico",
       "target": [
-      "nsis", "zip"
+        "nsis",
+        "zip"
       ]
     }
   },
