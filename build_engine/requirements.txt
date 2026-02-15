@@ -1,20 +1,35 @@
-pyinstaller==6.10.0
-vosk
-pyaudiowpatch
+# Build / freeze tooling
+pyinstaller==6.18.0
+pyinstaller-hooks-contrib==2026.0
+
+# Audio + offline STT
+vosk==0.3.45
+pyaudiowpatch==0.2.12.8
+
+# Env
 python-dotenv
 
-langchain
-langchain-community
-langchain-huggingface
-langchain-text-splitters
-faiss-cpu
-sentence-transformers
+# RAG / embeddings / vector DB
+langchain==1.2.9
+langchain-community==0.4.1
+langchain-huggingface==1.2.0
+langchain-text-splitters==1.1.0
+faiss-cpu==1.13.2
+sentence-transformers==4.1.0
 
+# Hugging Face stack
+transformers==4.55.4
+tokenizers==0.21.4
+safetensors==0.7.0
+huggingface_hub==0.36.2
+
+# Document loaders
 pypdf
 python-docx
 python-pptx
+
+# Numeric
 numpy==2.3.5
 
-google-generativeai
-
-
+# Cloud AI provider
+google-genai==1.63.0

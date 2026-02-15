@@ -50,19 +50,52 @@ python -m PyInstaller `
   --noconfirm `
   --clean `
   --onedir `
+  --no-archive `
   --name intass_engine `
   --distpath build_engine\dist `
   --workpath build_engine\work `
   --specpath build_engine\spec `
   --collect-all numpy `
-  --hidden-import numpy._core._exceptions `
-  --hidden-import numpy.core._multiarray_umath `
-  --hidden-import numpy.linalg._umath_linalg `
+  --collect-all transformers `
+  --collect-all tokenizers `
+  --collect-all safetensors `
+  --collect-all huggingface_hub `
+  --collect-all sentence_transformers `
+  --collect-all langchain `
+  --collect-all langchain_core `
+  --collect-all langchain_community `
+  --collect-all langchain_huggingface `
+  --collect-all langchain_text_splitters `
+  --collect-all faiss `
+  --collect-all faiss_cpu `
+  --copy-metadata faiss-cpu `
+  --copy-metadata transformers `
+  --copy-metadata tokenizers `
+  --copy-metadata safetensors `
+  --copy-metadata huggingface_hub `
+  --copy-metadata sentence-transformers `
+  --copy-metadata langchain `
+  --copy-metadata langchain-core `
+  --copy-metadata langchain-community `
+  --copy-metadata langchain-text-splitters `
+  --copy-metadata langchain-huggingface `
+  --copy-metadata google-genai `
+  --collect-all google_genai `
+  --copy-metadata google-genai `
   src\engine.py
+
 
 # --- Stage Vosk binaries into output ---
 $EngineOutDir     = Join-Path $ProjectRoot "build_engine\dist\intass_engine"
 $TargetVoskDir    = Join-Path $EngineOutDir "_internal\vosk"
+
+Info "Sanity check: transformers models folder exists?"
+$TfModels = Join-Path $EngineOutDir "_internal\transformers\models"
+if (-not (Test-Path $TfModels)) { Fail "Missing transformers models folder in build: $TfModels" }
+
+Info "Sanity check: faiss binary exists?"
+$FaissBin = Get-ChildItem -Path $EngineOutDir -Recurse -Filter "faiss*.pyd" -ErrorAction SilentlyContinue | Select-Object -First 1
+if (-not $FaissBin) { Warn "FAISS .pyd not found in build output (may crash when indexing). Check faiss-cpu collection." }
 
 Info "Staging Vosk binaries..."
 New-Item -ItemType Directory -Force -Path $TargetVoskDir | Out-Null
