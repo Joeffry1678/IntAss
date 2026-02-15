@@ -3,6 +3,10 @@ import re
 import glob
 import traceback
 
+import json
+import hashlib
+from datetime import datetime
+
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -25,6 +29,91 @@ class InterviewBrain:
             encode_kwargs={"normalize_embeddings": True}
         )
         self.vector_db = None
+
+    def _fingerprint_folder(self, folder: str) -> str:
+        """
+        Fast-ish fingerprint to detect changes.
+        Uses relative path + size + mtime_ns for supported files.
+        """
+        h = hashlib.sha1()
+        exts = {".pdf", ".docx", ".txt", ".md"}
+
+        for root, _, files in os.walk(folder):
+            for fn in files:
+                ext = os.path.splitext(fn)[1].lower()
+                if ext not in exts:
+                    continue
+
+                p = os.path.join(root, fn)
+                try:
+                    st = os.stat(p)
+                except OSError:
+                    continue
+
+                rel = os.path.relpath(p, folder).replace("\\", "/")
+                h.update(rel.encode("utf-8", "ignore"))
+                h.update(str(st.st_size).encode("ascii"))
+                h.update(str(getattr(st, "st_mtime_ns", int(st.st_mtime * 1e9))).encode("ascii"))
+
+        return h.hexdigest()
+
+    def save_cached_index(self, cache_dir: str, resources_folder: str):
+        """
+        Persists FAISS index + metadata to disk.
+        """
+        if self.vector_db is None:
+            return False, "No vector DB in memory"
+
+        os.makedirs(cache_dir, exist_ok=True)
+
+        # FAISS persistence (langchain)
+        self.vector_db.save_local(cache_dir)
+
+        meta = {
+            "schema": "intass_index_cache_v1",
+            "resources_folder": os.path.abspath(resources_folder),
+            "fingerprint": self._fingerprint_folder(resources_folder),
+            "saved_at": datetime.utcnow().isoformat() + "Z",
+        }
+        with open(os.path.join(cache_dir, "index_meta.json"), "w", encoding="utf-8") as f:
+            json.dump(meta, f, indent=2)
+
+        return True, "OK"
+
+    def load_cached_index(self, cache_dir: str, resources_folder: str):
+        """
+        Loads FAISS index from disk if present and still matches folder fingerprint.
+        Returns (ok, message, loaded_bool)
+        """
+        meta_path = os.path.join(cache_dir, "index_meta.json")
+        if not os.path.isfile(meta_path):
+            return True, "No cached index meta", False
+
+        try:
+            with open(meta_path, "r", encoding="utf-8") as f:
+                meta = json.load(f)
+        except Exception:
+            return False, "Cache meta is unreadable", False
+
+        saved_folder = os.path.abspath(str(meta.get("resources_folder", "")))
+        cur_folder = os.path.abspath(resources_folder)
+
+        if not saved_folder or saved_folder != cur_folder:
+            return True, "Cached index belongs to a different folder", False
+
+        # fingerprint check (prevents loading stale index)
+        cur_fp = self._fingerprint_folder(resources_folder)
+        if meta.get("fingerprint") != cur_fp:
+            return True, "Resources changed; cache is stale", False
+
+        # Load FAISS (langchain)
+        self.vector_db = FAISS.load_local(
+            cache_dir,
+            self.embeddings,
+            allow_dangerous_deserialization=True
+        )
+        return True, "Loaded cached index", True
+
 
     def _clean_text(self, s: str) -> str:
         if not s:
@@ -73,8 +162,8 @@ class InterviewBrain:
 
         return s.strip()
 
-    def index_resources(self):
-        folder = self.folder
+    def index_resources(self, folder: str = None):
+        folder = folder or self.folder
         if not folder or not os.path.isdir(folder):
             self.vector_db = None
             return False, f"Folder not found: {folder}"

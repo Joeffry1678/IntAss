@@ -33,6 +33,16 @@ RESOURCE_PATH = (
     or os.path.abspath(os.path.join(BASE_DIR, "..", "resources"))
 )
 
+def default_cache_dir():
+    # ✅ Prefer a writable cache dir set by Electron (userData)
+    env_cd = (os.environ.get("INTASS_CACHE_DIR") or "").strip()
+    if env_cd:
+        return os.path.abspath(env_cd)
+
+    # fallback (dev only): cache next to repo
+    return os.path.abspath(os.path.join(BASE_DIR, "..", "cache", "knowledge"))
+
+
 def emit(payload):
     print(json.dumps(payload), flush=True)
 
@@ -40,6 +50,45 @@ def status(text):
     emit({"type": "status", "text": text})
 
 class IntAssEngine:
+
+    def load_cached_index(self, path="", cache_dir=""):
+        try:
+            if path:
+                self.set_resources_folder(path)
+
+            # ✅ always use the actual resource_path (string)
+            folder = str(getattr(self, "resource_path", "") or "").strip()
+
+            if not folder or not os.path.isdir(folder):
+                emit({"type": "status", "text": "No resources folder set."})
+                emit({"type": "index_loaded", "cached": False})
+                return
+
+            emit({"type": "status", "text": "Checking cached index…"})
+            emit({"type": "status", "text": "Loading cached index…"})
+
+            if not self.brain:
+                self._init_brain(folder)
+
+            ok, msg, loaded = self.brain.load_cached_index(
+                cache_dir or default_cache_dir(),
+                folder
+            )
+
+            emit({"type": "status", "text": msg})
+
+            if loaded:
+                emit({"type": "status", "text": "Local knowledge loaded"})
+                emit({"type": "index_loaded", "cached": True})
+            else:
+                emit({"type": "index_loaded", "cached": False})
+
+        except Exception as e:
+            emit({"type": "status", "text": f"Cache load failed: {e}"})
+            emit({"type": "index_loaded", "cached": False})
+
+
+
     def __init__(self):
         self.target_rate = 16000
         self.audio_q = queue.Queue()
@@ -90,20 +139,25 @@ class IntAssEngine:
                 status("ERROR: No folder provided.")
                 return
 
-            folder = os.path.abspath(folder)
+            folder = os.path.abspath(str(folder))
 
             if not os.path.isdir(folder):
                 emit({"type": "error", "message": f"Folder does not exist: {folder}"})
                 status(f"ERROR: Folder does not exist: {folder}")
                 return
 
+            # ✅ single source of truth
             self.resource_path = folder
+            # ✅ compatibility alias (so older code using resources_folder still works)
+            self.resources_folder = folder
+
             status(f"Resources folder set: {self.resource_path}")
             self._init_brain(self.resource_path)
             status("Resources updated. Ready to index.")
         except Exception as e:
             emit({"type": "error", "message": f"Failed to set resources folder: {e}"})
             status(f"ERROR: Failed to set resources folder: {e}")
+
 
     def list_devices(self):
         status("Scanning audio devices…")
@@ -158,33 +212,41 @@ class IntAssEngine:
             pass
         status("Stopping…")
 
-    def index_knowledge(self):
+    def index_knowledge(self, path: str = "", cache_dir: str = ""):
         try:
-            status("Indexing resources…")
-
-            if not self.brain:
-                self._init_brain(self.resource_path)
-            if not self.brain:
-                emit({"type": "error", "message": "Knowledge base not available (brain init failed)."})
-                status("ERROR: Knowledge base not available.")
+            # if caller provided a folder, use it; otherwise use current resource_path
+            folder = (path or self.resource_path or "").strip()
+            if not folder or not os.path.isdir(folder):
+                emit({"type": "error", "message": f"Invalid resources folder: {folder}"})
                 return
 
-            ok, msg = self.brain.index_resources()
+            # ensure brain exists and points to the same folder
+            if not self.brain or getattr(self.brain, "folder", None) != folder:
+                self._init_brain(folder)
 
-            # ✅ only claim success if indexing actually built a DB
-            if not ok or not getattr(self.brain, "vector_db", None):
-                emit({"type": "error", "message": f"Indexing failed: {msg}"})
-                status(f"ERROR: Indexing failed: {msg}")
+            if not self.brain:
+                emit({"type": "error", "message": "Brain not initialized."})
                 return
 
-            status(f"Index complete: {self.resource_path}")
-            emit({"type": "index_done", "path": self.resource_path})
-            emit({"type": "status", "text": f"Local Knowledge Indexed: {self.resource_path}"})
+            emit({"type": "status", "text": "Indexing local knowledge…"})
+            ok, msg = self.brain.index_resources(folder)
+            if not ok:
+                emit({"type": "error", "message": msg or "Index failed"})
+                return
 
+            # save cache after successful index
+            try:
+                cd = cache_dir or default_cache_dir()
+                ok2, msg2 = self.brain.save_cached_index(cd, folder)
+                emit({"type": "status", "text": "Cached index saved." if ok2 else f"Cache save skipped: {msg2}"})
+            except Exception as e:
+                emit({"type": "status", "text": f"Cache save failed: {e}"})
 
+            emit({"type": "status", "text": "Local knowledge indexed."})
+            emit({"type": "index_done"})
         except Exception as e:
-            emit({"type": "error", "message": f"Indexing failed: {e}"})
-            status(f"ERROR: Indexing failed: {e}")
+            emit({"type": "error", "message": str(e)})
+
 
     def query_knowledge(self, question: str, ai_enabled: bool = True):
         try:
@@ -366,7 +428,11 @@ def main():
                 engine.stop()
 
             elif cmd == "index_knowledge":
-                threading.Thread(target=engine.index_knowledge, daemon=True).start()
+                threading.Thread(
+                    target=engine.index_knowledge,
+                    args=(msg.get("path", ""), msg.get("cache_dir", "")),
+                    daemon=True
+                ).start()
 
             elif cmd == "query_knowledge":
                 threading.Thread(
@@ -377,6 +443,13 @@ def main():
 
             elif cmd == "set_resources":
                 engine.set_resources_folder(msg.get("path", ""))
+
+            elif cmd == "load_cached_index":
+                threading.Thread(
+                    target=engine.load_cached_index,
+                    args=(msg.get("path", ""), msg.get("cache_dir", "")),
+                    daemon=True
+                ).start()
 
         except Exception:
             pass

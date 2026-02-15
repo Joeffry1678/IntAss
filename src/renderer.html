@@ -307,6 +307,10 @@
 </div>
 
 <script>
+
+  let bootCacheKickDone = false;
+
+  let lastAudioDeviceId = "";
   
 	let currentScriptPath = "";     // full file path of the opened/created script
 	let scriptLocked = true;        // locked by default
@@ -622,6 +626,29 @@ function renderScript() {
     modal.pin()?.focus();
   }
 
+  async function loadLastAudioDeviceId() {
+    try {
+      const r = await ipcRenderer.invoke("audioDevice:getLast");
+      lastAudioDeviceId = String(r?.deviceId || "");
+    } catch {
+      lastAudioDeviceId = "";
+    }
+  }
+
+  async function saveLastAudioDeviceId(id) {
+    lastAudioDeviceId = String(id || "");
+    try {
+      await ipcRenderer.invoke("audioDevice:setLast", { deviceId: lastAudioDeviceId });
+    } catch {}
+  }
+
+  function applySavedDeviceSelection() {
+    if (!deviceSelect) return;
+    if (!lastAudioDeviceId) return;
+
+    const opt = Array.from(deviceSelect.options).find(o => o.value === lastAudioDeviceId);
+    if (opt) deviceSelect.value = lastAudioDeviceId;
+  }
 
 
   async function openUnlockModal() {
@@ -1370,7 +1397,6 @@ if (res?.ok) {
   });
 }
 
-
 	let resizing = false;
 	let lastX = 0;
 	let lastY = 0;
@@ -2004,32 +2030,54 @@ if (res?.ok) {
       setStatus("Loaded transcripts", readyLatched ? "ready" : "info");
     }
 
-    ipcRenderer.on('from-python', (event, data) => {
-      if (!data || !data.type) return;	  
+  ipcRenderer.on("from-python", (event, data) => {
+    if (!data || !data.type) return;
 
+    if (data.type === "ui_capture_stopped") {
+      isCapturing = false;
+      captureBtn.innerText = "Start";
+      captureBtn.className = "btn-start";
+      partialText.innerText = "";
+      setStatus("Idle.", "warn");
+      return;
+    }
 
-	  if (data.type === "ui_capture_stopped") {
-	    // force UI back to stopped state
-	    isCapturing = false;
-	    captureBtn.innerText = "Start";
-	    captureBtn.className = "btn-start";
-	    partialText.innerText = "";
-	    setStatus("Idle.", "warn");
-	  }
+    if (data.type === "status") {
+      const t = String(data.text || "");
 
+      // ✅ ONE-TIME boot cache load: only after engine is ready
+      if (!bootCacheKickDone && /\bengine\b.*\bready\b/i.test(t)) {
+        bootCacheKickDone = true;
 
-      if (data.type === 'status') {
-        const t = String(data.text || "");
+        setTimeout(async () => {
+          try {
+            const r = await ipcRenderer.invoke("resources:getSaved");
+            const saved = String(r?.path || "").trim();
+            if (!saved) return;
+
+            ipcRenderer.send("python-cmd", { cmd: "set_resources", path: saved });
+
+            readyLatched = false;
+            setStatus("Loading cached index…", "search");
+
+            ipcRenderer.send("python-cmd", { cmd: "load_cached_index", path: saved });
+          } catch (e) {
+            console.error("boot cached index load failed", e);
+          }
+        }, 150);
+      }
+
 
         if (isCapturing && /^idle\./i.test(t) && (Date.now() - lastStartAt) < 1500) return;
 
         let mode = "info";
-        if (/indexing/i.test(t)) mode = "search";
+        if (/indexing|checking cached index|loading cached index/i.test(t)) mode = "search";
+
 
         // ✅ FIX: treat BOTH of these as "indexing done"
-        else if (/index complete|local knowledge indexed/i.test(t)) mode = "ready";
-
+        else if (/index complete|local knowledge indexed|local knowledge loaded/i.test(t)) mode = "ready";
         else if (/indexed|engine ready/i.test(t)) mode = "ready";
+
         else if (/searching/i.test(t)) mode = "search";
         else if (/search complete/i.test(t)) mode = "search";
         else if (/listening/i.test(t)) mode = "listen";
@@ -2052,9 +2100,21 @@ if (res?.ok) {
         if (mode === "ready") readyLatched = true;
       }
 
-      if (data.type === 'device_list') {
+      if (data.type === "device_list") {
+        const prev = deviceSelect.value; // keep current if possible
+
         deviceSelect.innerHTML =
-          (data.devices || []).map(d => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join('');
+          (data.devices || []).map(d => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join("");
+
+        // Prefer: saved device -> previous selection -> first item
+        applySavedDeviceSelection();
+
+        if (!deviceSelect.value && prev) {
+          const stillThere = Array.from(deviceSelect.options).some(o => o.value === prev);
+          if (stillThere) deviceSelect.value = prev;
+        }
+
+        // If nothing matched, browser will default to first option automatically
       }
 
       if (data.type === 'partial') {
@@ -2212,6 +2272,9 @@ function wireButtons() {
     );
   });
 
+  deviceSelect?.addEventListener("change", () => {
+    saveLastAudioDeviceId(deviceSelect.value);
+  });
 
   
 
@@ -2258,13 +2321,21 @@ function wireButtons() {
 
 
   // Script: Duplicate (wizard)
-  document.getElementById("script-dup-btn")?.addEventListener("click", () => {
+  document.getElementById("script-dup-btn")?.addEventListener("click", async () => {
     if (!currentScriptPath || !scriptTree) {
       setStatus("No script loaded to duplicate.", "warn");
       return;
     }
-    openScriptWizard({ mode: "duplicate" });
+
+    const pick = await ipcRenderer.invoke("script:newSaveDialog");
+    if (!pick?.ok) {
+      setStatus(pick?.error || "Duplicate cancelled", "warn");
+      return;
+    }
+
+    openScriptWizardAtPin({ mode: "duplicate", targetPath: pick.path });
   });
+
 
   // Script: Unlock/Edit (PIN)
   async function doUnlock() {
@@ -2503,7 +2574,6 @@ modeBtn?.addEventListener("click", () => {
     setStatus("Editor unlocked", "ready");
   });
 
-
 }
 
 
@@ -2570,6 +2640,8 @@ window.onload = async () => {
     toggleCapture();
   }, { passive: false });
 
+  await loadLastAudioDeviceId();
+
   ipcRenderer.send("python-cmd", { cmd: "get_devices" });
   setStatus("Starting…", "info");
     // ✅ FIRST BOOT TUTORIAL NOTICE
@@ -2586,6 +2658,30 @@ window.onload = async () => {
     } catch (e) {
       console.error("First boot hint failed:", e);
     }
+
+  try {
+    const r = await ipcRenderer.invoke("resources:getSaved");
+    const saved = String(r?.path || "").trim();
+
+    if (saved) {
+      // tell engine which folder to use
+      ipcRenderer.send("python-cmd", { cmd: "set_resources", path: saved });
+
+      // then check/load cached index
+      ipcRenderer.send("python-cmd", {
+        cmd: "load_cached_index",
+        path: saved
+      });
+
+      // status feedback immediately
+      readyLatched = false;
+      setStatus("Checking cached index…", "search");
+    }
+  } catch (e) {
+    // don't break boot
+    console.error("cached index init failed", e);
+  }
+
 
 
 };

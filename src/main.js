@@ -39,6 +39,13 @@ process.on("unhandledRejection", (err) => {
 
 // ✅ IPC (ONLY ONE COPY IN FILE)
 
+// ✅ return saved resources folder (so renderer can auto-load cache after UI appears)
+ipcMain.handle("resources:getSaved", async () => {
+  const s = loadSettings();
+  return { ok: true, path: String(s.resourcesFolder || "") };
+});
+
+
 // NEW: show Save dialog first, return exact file path user chose
 ipcMain.handle("script:newSaveDialog", async () => {
   try {
@@ -64,6 +71,20 @@ ipcMain.handle("script:newSaveDialog", async () => {
   } catch (e) {
     return { ok: false, error: e?.message || String(e) };
   }
+});
+
+
+// --- Audio device preference (persist last used device) ---
+ipcMain.handle("audioDevice:getLast", async () => {
+  const s = loadSettings();
+  return { ok: true, deviceId: String(s.lastAudioDeviceId || "") };
+});
+
+ipcMain.handle("audioDevice:setLast", async (_e, { deviceId } = {}) => {
+  const s = loadSettings();
+  s.lastAudioDeviceId = String(deviceId || "");
+  saveSettings(s);
+  return { ok: true };
 });
 
 
@@ -828,6 +849,17 @@ try {
 
   sendToSplash?.("License OK. Starting engine…");
 
+  // ✅ make Python cache writable in packaged apps
+  try {
+    const cacheDir = path.join(app.getPath("userData"), "cache", "knowledge");
+    fs.mkdirSync(cacheDir, { recursive: true });
+    process.env.INTASS_CACHE_DIR = cacheDir;
+    logToFile(`[CACHE] INTASS_CACHE_DIR=${cacheDir}`);
+  } catch (e) {
+    logToFile(`[CACHE] failed to set cache dir: ${e?.message || e}`);
+  }
+
+
   if (!engineStarted) {
     engineStarted = true;
     pythonEngine.start();
@@ -1003,7 +1035,7 @@ async function showDeactivatedPopup(detailText = "") {
         <div class="mid">${safeMachineId}</div>
 
         <p class="msg">
-          Please contact <b>pongapps@gmail.com</b> to activate licensing.
+          Please contact <b>pongapps26@gmail.com</b> to activate licensing.
         </p>
 
 
