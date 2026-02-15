@@ -1447,6 +1447,15 @@ if (res?.ok) {
 	  }
 	}
 
+  let statusHoldUntil = 0;
+
+  function holdStatus(ms = 0) {
+    statusHoldUntil = Date.now() + Math.max(0, ms);
+  }
+
+  function isStatusHeld() {
+    return Date.now() < statusHoldUntil;
+  }
 
 
 	
@@ -1595,15 +1604,17 @@ if (res?.ok) {
 	// The user must open/create a script file first.
 
 
-    function setStatus(text, mode = "info") {
-      statusText.innerText = text || "";
+  function setStatus(text, mode = "info") {
+    statusText.innerText = text || "";
 
-      if (mode === "ready") statusLight.style.background = "#00ff00";
-      else if (mode === "search") statusLight.style.background = "#2aa8ff";
-      else if (mode === "listen") statusLight.style.background = "#00c2ff";
-      else if (mode === "warn") statusLight.style.background = "#ffd000";
-      else statusLight.style.background = "#ff4444";
-    }
+    if (mode === "ready") statusLight.style.background = "#00ff00";
+    else if (mode === "search") statusLight.style.background = "#2aa8ff";
+    else if (mode === "listen") statusLight.style.background = "#00c2ff";
+    else if (mode === "warn") statusLight.style.background = "#ffd000";
+    else if (mode === "error") statusLight.style.background = "#ff4444";
+    else statusLight.style.background = "#2aa8ff"; // ✅ info/default = blue
+  }
+
 	
 	function showCtxWaitingMessage() {
 	  aiBrain.innerHTML = `<div class="ai-placeholder">Waiting for Context...</div>`;
@@ -2032,6 +2043,8 @@ if (res?.ok) {
 
         // ✅ FIX: DO NOT force warn -> ready (this was making Idle green)
         if (readyLatched && mode === "info") mode = "ready";
+
+        if (isStatusHeld() && mode !== "error") return;
 
         setStatus(t, mode);
 
@@ -2559,19 +2572,21 @@ window.onload = async () => {
 
   ipcRenderer.send("python-cmd", { cmd: "get_devices" });
   setStatus("Starting…", "info");
-  // ✅ FIRST BOOT TUTORIAL NOTICE
-  try {
-    const seen = localStorage.getItem("intass_seen_tutorial_hint");
-    if (!seen) {
-      setTimeout(() => {
-        setStatus("Welcome! Click the tutorial icon in the title bar to begin (TOP LEFT ICON).", "info");
-      }, 900);
+    // ✅ FIRST BOOT TUTORIAL NOTICE
+    try {
+      const seen = localStorage.getItem("intass_seen_tutorial_hint");
+      if (!seen) {
+        setTimeout(() => {
+          holdStatus(6000); // ✅ hold for 6 seconds
+          setStatus("Welcome! Click the tutorial icon in the title bar to begin (TOP LEFT ICON).", "info");
+        }, 900);
 
-      localStorage.setItem("intass_seen_tutorial_hint", "1");
+        localStorage.setItem("intass_seen_tutorial_hint", "1");
+      }
+    } catch (e) {
+      console.error("First boot hint failed:", e);
     }
-  } catch (e) {
-    console.error("First boot hint failed:", e);
-  }
+
 
 };
   </script>  

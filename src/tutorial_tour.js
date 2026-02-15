@@ -390,10 +390,10 @@
           sel: "#resources-btn",
           title: "Resources Folder",
           body:
-            "Pick a folder of PDFs/DOCX/PPTX. The engine will index it for search.\n\n" +
+            "Pick a folder of PDFs/DOCX/PPTX. (ALWAYS PICK A RESOURCE FOLDER EVERYTIME YOU OPEN THE APP).\n\n" +
             "Proper Documentation Format: <a href='#' id='open-resources-guide' style='color:#6cb8ff;font-weight:700;'>Open Resources Guide</a>"
         },
-        { sel: "#reload-btn", title: "Reload", body: "Reload refreshes the renderer UI (handy after config changes)." },
+        { sel: "#reload-btn", title: "Reload", body: "Reload refreshes the renderer UI (ALWAYS CLICK THIS IF YOU HAVE ANY CHANGES OR PICK A NEW RESOURCE FOLDER)." },
         { sel: "#rescan-btn", title: "Rescan Audio", body: "If your mic disappears, rescan audio devices." },
       ]
     },
@@ -479,7 +479,6 @@
       title: "Create or Open a script FIRST",
       body:
         "You must **Create (New)** or **Open** a script before Edit Mode exists.\n\n" +
-        "✅ Do that now.\n\n" +
         "When a script is loaded, the Status pill will change from “NO SCRIPT …” to LOCKED/UNLOCKED.",
       ensure: () => forceScriptMode(true),
     },
@@ -489,7 +488,6 @@
       title: "Unlock/Edit to enter Edit Mode",
       body:
         "Now click **Unlock/Edit** and enter the 4-digit PIN.\n\n" +
-        "✅ Do that now.\n\n" +
         "When the editor opens, you will see the Script Editor panel.",
       ensure: () => forceScriptMode(true),
     },
