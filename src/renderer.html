@@ -2582,6 +2582,32 @@ window.onload = async () => {
   wireButtons();
   await loadMachineId();
 
+    // ✅ Enter = Ask (but don't break editing / modals / multiline)
+  window.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+
+    // If we're editing a transcript line, Enter already means "save"
+    if (typeof editingIndex !== "undefined" && editingIndex !== -1) return;
+
+    // If Script editor is open, don't hijack Enter (it’s used for inputs)
+    if (typeof scriptEditorOpen !== "undefined" && scriptEditorOpen) return;
+
+    // If modal is open (PIN/unlock), don't hijack Enter
+    const modalOpen = document.getElementById("modal-backdrop")?.style.display === "block";
+    if (modalOpen) return;
+
+    // If user is typing in any input/textarea/contentEditable, don't hijack Enter
+    const ae = document.activeElement;
+    const isTyping =
+      ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.isContentEditable);
+    if (isTyping) return;
+
+    e.preventDefault();
+
+    // Trigger Ask
+    document.getElementById("ask-btn")?.click();
+  }, { passive: false });
+
   // ✅ privacy init (ONLY ONCE)
   const privacyToggle = document.getElementById("privacy-toggle");
   try {
