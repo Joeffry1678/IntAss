@@ -10,7 +10,7 @@ const createPythonEngine = require("./core/python_engine");
 
 const { logToFile } = require("./core/logger");
 
-const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu, Tray, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { pathToFileURL } = require('url');
@@ -18,6 +18,7 @@ const { pathToFileURL } = require('url');
 const WebSocket = require("ws");
 globalThis.WebSocket = WebSocket;   // <- important
 global.WebSocket = WebSocket;       // <- ok to keep too
+let tray = null;
 // ✅ Supabase (Auth + Realtime licensing)
 let engineStarted = false;
 let win = null;
@@ -717,6 +718,43 @@ async function createWindow() {
       contextIsolation: false
     }
   });
+
+  win.setSkipTaskbar(true); // ✅ removes taskbar icon
+
+  // ✅ System tray icon
+  try {
+    // ✅ prevent duplicate tray icon if createWindow() runs again
+    if (tray) {
+      try { tray.destroy(); } catch {}
+      tray = null;
+    }
+
+    const trayIcon = nativeImage.createFromPath(assetPath("intass.ico"));
+    tray = new Tray(trayIcon);
+    tray.setToolTip("IntAss");
+
+    // click tray to show/focus
+    tray.on("click", () => {
+      if (!win || win.isDestroyed()) return;
+      win.show();
+      win.focus();
+    });
+
+    tray.setContextMenu(Menu.buildFromTemplate([
+      {
+        label: "Open IntAss",
+        click: () => {
+          if (!win || win.isDestroyed()) return;
+          win.show();
+          win.focus();
+        }
+      },
+      { type: "separator" },
+      { label: "Quit", click: () => app.quit() }
+    ]));
+  } catch (e) {
+    logToFile("[TRAY] Failed: " + (e?.message || e));
+  }
 
   mark("main window created");
 
